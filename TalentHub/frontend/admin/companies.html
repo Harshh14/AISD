@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Companies – TalentHub Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <div id="spinner" class="spinner-overlay"><div class="spinner"></div></div>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><h2><i class="fas fa-shield-alt"></i> TalentHub</h2><span>Admin Portal</span></div>
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Main</div>
+        <a href="dashboard.html" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+        <div class="nav-section-label">Management</div>
+        <a href="students.html" class="nav-link"><i class="fas fa-user-graduate"></i> Students</a>
+        <a href="companies.html" class="nav-link active"><i class="fas fa-building"></i> Companies</a>
+        <a href="reports.html" class="nav-link"><i class="fas fa-chart-bar"></i> Reports</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-info"><div class="user-avatar" id="sidebar-avatar">A</div><div><div class="user-name" id="sidebar-user-name">Admin</div><div class="user-role" id="sidebar-user-role">Admin</div></div></div>
+        <button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+      </div>
+    </aside>
+    <main class="main-content">
+      <div class="top-bar"><h1>Company Management</h1></div>
+      <div class="page-content">
+        <div class="toolbar">
+          <div class="search-box"><i class="fas fa-search"></i><input type="text" id="search" placeholder="Search by company, industry..."></div>
+        </div>
+        <div class="card">
+          <div class="table-container">
+            <table>
+              <thead><tr><th>#</th><th>Company Name</th><th>Industry</th><th>HR Name</th><th>HR Email</th><th>Location</th><th>Website</th><th>Verified</th></tr></thead>
+              <tbody id="companies-body"><tr><td colspan="8" style="text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="../js/api.js"></script>
+  <script>
+    requireAuth('admin'); renderSidebarUser();
+    let allCompanies = [];
+
+    const renderCompanies = (companies) => {
+      const body = document.getElementById('companies-body');
+      if (!companies.length) { body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);">No companies registered.</td></tr>'; return; }
+      body.innerHTML = companies.map((c,i) => `<tr>
+        <td>${i+1}</td>
+        <td><strong>${c.companyName||'—'}</strong></td>
+        <td>${c.industry||'—'}</td>
+        <td>${c.hrName||'—'}</td>
+        <td style="font-size:.82rem;">${c.hrEmail||'—'}</td>
+        <td>${c.location||'—'}</td>
+        <td>${c.website ? `<a href="${c.website}" target="_blank" style="color:var(--accent);">${c.website.replace('https://','')}</a>` : '—'}</td>
+        <td>${c.isVerified ? '<span class="badge badge-success">Verified</span>' : '<span class="badge badge-warning">Pending</span>'}</td>
+      </tr>`).join('');
+    };
+
+    (async () => {
+      showLoading();
+      try { const { data } = await api('/companies'); allCompanies = data; renderCompanies(allCompanies); } catch(e) { showToast(e.message,'error'); }
+      hideLoading();
+    })();
+
+    document.getElementById('search').addEventListener('input', (e) => {
+      const q = e.target.value.toLowerCase();
+      renderCompanies(allCompanies.filter(c => (c.companyName||'').toLowerCase().includes(q) || (c.industry||'').toLowerCase().includes(q) || (c.location||'').toLowerCase().includes(q)));
+    });
+  </script>
+</body>
+</html>

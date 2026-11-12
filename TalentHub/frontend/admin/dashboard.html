@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard – TalentHub</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <div id="spinner" class="spinner-overlay"><div class="spinner"></div></div>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><h2><i class="fas fa-shield-alt"></i> TalentHub</h2><span>Admin Portal</span></div>
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Main</div>
+        <a href="dashboard.html" class="nav-link active"><i class="fas fa-home"></i> Dashboard</a>
+        <div class="nav-section-label">Management</div>
+        <a href="students.html" class="nav-link"><i class="fas fa-user-graduate"></i> Students</a>
+        <a href="companies.html" class="nav-link"><i class="fas fa-building"></i> Companies</a>
+        <a href="reports.html" class="nav-link"><i class="fas fa-chart-bar"></i> Reports</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-info"><div class="user-avatar" id="sidebar-avatar">A</div><div><div class="user-name" id="sidebar-user-name">Admin</div><div class="user-role" id="sidebar-user-role">Admin</div></div></div>
+        <button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+      </div>
+    </aside>
+    <main class="main-content">
+      <div class="top-bar"><h1>Admin Dashboard</h1><div class="top-bar-actions"><a href="reports.html" class="btn btn-accent btn-sm"><i class="fas fa-chart-bar"></i> View Reports</a></div></div>
+      <div class="page-content">
+        <div class="stats-grid">
+          <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-users"></i></div><div class="stat-info"><h3 id="stat-students">-</h3><p>Registered Students</p></div></div>
+          <div class="stat-card"><div class="stat-icon green"><i class="fas fa-trophy"></i></div><div class="stat-info"><h3 id="stat-placed">-</h3><p>Placed Students</p></div></div>
+          <div class="stat-card"><div class="stat-icon orange"><i class="fas fa-building"></i></div><div class="stat-info"><h3 id="stat-companies">-</h3><p>Partner Companies</p></div></div>
+          <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-briefcase"></i></div><div class="stat-info"><h3 id="stat-jobs">-</h3><p>Active Jobs</p></div></div>
+          <div class="stat-card"><div class="stat-icon navy"><i class="fas fa-file-alt"></i></div><div class="stat-info"><h3 id="stat-applications">-</h3><p>Total Applications</p></div></div>
+          <div class="stat-card"><div class="stat-icon red"><i class="fas fa-file-contract"></i></div><div class="stat-info"><h3 id="stat-offers">-</h3><p>Offers Issued</p></div></div>
+          <div class="stat-card"><div class="stat-icon teal"><i class="fas fa-percent"></i></div><div class="stat-info"><h3 id="stat-pct">-</h3><p>Placement %</p></div></div>
+          <div class="stat-card"><div class="stat-icon gold"><i class="fas fa-money-bill-wave"></i></div><div class="stat-info"><h3 id="stat-ctc">-</h3><p>Avg CTC</p></div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-top:4px;">
+          <div class="card">
+            <h3 style="margin-bottom:16px;color:var(--primary);"><i class="fas fa-chart-pie"></i> Branch-wise Placements</h3>
+            <div id="branch-stats"></div>
+          </div>
+          <div class="card">
+            <h3 style="margin-bottom:16px;color:var(--primary);"><i class="fas fa-clock"></i> Recent Applications</h3>
+            <div id="recent-apps"></div>
+            <a href="students.html" class="btn btn-outline btn-sm" style="margin-top:14px;">View All Students →</a>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="../js/api.js"></script>
+  <script>
+    requireAuth('admin'); renderSidebarUser();
+    (async () => {
+      showLoading();
+      try {
+        const { data } = await api('/dashboard/admin');
+        document.getElementById('stat-students').textContent = data.stats.totalStudents;
+        document.getElementById('stat-placed').textContent = data.stats.placedStudents;
+        document.getElementById('stat-companies').textContent = data.stats.totalCompanies;
+        document.getElementById('stat-jobs').textContent = data.stats.activeJobs;
+        document.getElementById('stat-applications').textContent = data.stats.totalApplications;
+        document.getElementById('stat-offers').textContent = data.stats.offersIssued;
+        document.getElementById('stat-pct').textContent = data.stats.placementPercentage + '%';
+        document.getElementById('stat-ctc').textContent = formatCTC(data.stats.avgCtc);
+
+        const branchEl = document.getElementById('branch-stats');
+        if (data.branchStats?.length) {
+          branchEl.innerHTML = data.branchStats.map(b => `
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid var(--border);">
+              <span style="font-weight:600;">${b.branch}</span>
+              <div style="display:flex;gap:12px;font-size:.85rem;">
+                <span style="color:var(--text-muted);">${b.total} students</span>
+                <span style="color:var(--success);font-weight:700;">${b.placed} placed</span>
+              </div>
+            </div>`).join('');
+        } else { branchEl.innerHTML = '<p style="color:var(--text-muted);">No data yet.</p>'; }
+
+        const appsEl = document.getElementById('recent-apps');
+        if (data.recentApplications?.length) {
+          appsEl.innerHTML = data.recentApplications.map(a => `
+            <div style="display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border);">
+              <div><div style="font-weight:600;font-size:.88rem;">${a.student?.user?.name||'—'}</div><div style="font-size:.78rem;color:var(--text-muted);">${a.job?.title||''} @ ${a.job?.company?.companyName||''}</div></div>
+              ${statusBadge(a.status)}
+            </div>`).join('');
+        } else { appsEl.innerHTML = '<p style="color:var(--text-muted);">No applications yet.</p>'; }
+      } catch(err) { showToast(err.message,'error'); }
+      hideLoading();
+    })();
+  </script>
+</body>
+</html>

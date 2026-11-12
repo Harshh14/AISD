@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Dashboard – FinPay</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span>FinPay</span>
+        <span class="brand-badge">Student</span>
+      </div>
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.html" class="active">&#128202; Dashboard</a></li>
+        <li><a href="wallet.html">&#128176; My Wallet</a></li>
+        <li><a href="pay.html">&#128184; Pay Merchant</a></li>
+        <li><a href="transactions.html">&#128220; History</a></li>
+        <li><a href="cashback.html">&#127873; Cashback & Tiers</a></li>
+        <li><a href="profile.html">&#128100; Profile</a></li>
+        <li><a href="#" onclick="logout(); return false;">&#128682; Logout</a></li>
+      </ul>
+      <div class="sidebar-user">
+        <div class="user-name" id="user-display-name">Loading...</div>
+        <div class="user-role-tier" id="user-display-role">Student</div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">Welcome back, <span id="welcome-name">Student</span>!</h1>
+          <p class="page-subtitle">Campus Digital Wallet & Real-Time Cashback Overview</p>
+        </div>
+        <div style="display: flex; gap: 0.75rem;">
+          <a href="wallet.html" class="btn btn-outline btn-sm">+ Add Money</a>
+          <a href="pay.html" class="btn btn-primary btn-sm">&#128184; Pay Merchant</a>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card accent">
+          <div class="stat-label">Wallet Balance</div>
+          <div class="stat-value" id="wallet-balance">₹0.00</div>
+          <div class="stat-desc">Available to spend at campus merchants</div>
+        </div>
+
+        <div class="stat-card success">
+          <div class="stat-label">Membership Tier</div>
+          <div class="stat-value" id="membership-tier">BASIC</div>
+          <div class="stat-desc" id="tier-multiplier-desc">1x Cashback multiplier</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="stat-label">Lifetime Cashback</div>
+          <div class="stat-value" id="lifetime-cashback">₹0.00</div>
+          <div class="stat-desc">Credited automatically to wallet</div>
+        </div>
+
+        <div class="stat-card warning">
+          <div class="stat-label">Total Transactions</div>
+          <div class="stat-value" id="total-transactions">0</div>
+          <div class="stat-desc">Payments and top-up records</div>
+        </div>
+      </div>
+
+      <!-- Quick Actions & Monthly Cashback Progress -->
+      <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem;">
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Recent Transactions</h2>
+            <a href="transactions.html" class="btn btn-outline btn-sm">View All</a>
+          </div>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Date</th>
+                  <th>Merchant / Activity</th>
+                  <th>Type</th>
+                  <th>Amount</th>
+                  <th>Cashback</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="recent-transactions-tbody">
+                <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading transactions...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Cashback This Month</h2>
+            <a href="cashback.html" style="font-size: 0.85rem;">Details</a>
+          </div>
+          <div style="margin-bottom: 1rem;">
+            <div style="font-size: 0.85rem; color: var(--text-muted);">Current Month Total</div>
+            <div style="font-size: 1.8rem; font-weight: 700; color: var(--accent);" id="month-total-cb">₹0.00</div>
+          </div>
+          <div id="monthly-breakdown-list" style="font-size: 0.88rem; display: flex; flex-direction: column; gap: 0.75rem;">
+            Loading categories...
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    if (requireAuth(['student'])) {
+      initSidebarUser();
+      loadDashboard();
+    }
+
+    async function loadDashboard() {
+      try {
+        const user = getUser();
+        if (user && user.name) {
+          document.getElementById('welcome-name').textContent = user.name;
+        }
+
+        // 1. Fetch Wallet Balance
+        const wallet = await apiFetch('/api/wallet');
+        document.getElementById('wallet-balance').textContent = formatRupees(wallet.balance_rupees);
+
+        // 2. Fetch User Me for latest tier
+        const me = await apiFetch('/api/auth/me');
+        const tier = me.membership_tier || 'BASIC';
+        document.getElementById('membership-tier').innerHTML = renderTierBadge(tier);
+        const mult = tier === 'PREMIUM' ? '2.0x' : (tier === 'PRIME' ? '1.5x' : '1.0x');
+        document.getElementById('tier-multiplier-desc').textContent = `${mult} Cashback & Cap multiplier`;
+
+        // 3. Fetch Cashback Summary
+        const cbSummary = await apiFetch('/api/cashback/summary');
+        document.getElementById('lifetime-cashback').textContent = formatRupees(cbSummary.total_lifetime_cashback_rupees);
+        document.getElementById('month-total-cb').textContent = formatRupees(cbSummary.current_month_total_cashback_rupees);
+
+        const listEl = document.getElementById('monthly-breakdown-list');
+        listEl.innerHTML = cbSummary.category_usages.slice(0, 4).map(u => `
+          <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border); padding-bottom: 0.4rem;">
+            <span>${u.category}</span>
+            <span style="font-weight: 600; color: var(--primary);">₹${u.cashback_used_rupees.toFixed(2)} / ₹${u.cap_rupees.toFixed(2)}</span>
+          </div>
+        `).join('');
+
+        // 4. Fetch Transactions
+        const txs = await apiFetch('/api/payments/me');
+        document.getElementById('total-transactions').textContent = txs.length;
+
+        const tbody = document.getElementById('recent-transactions-tbody');
+        if (txs.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No transactions yet. Top up your wallet to get started!</td></tr>';
+        } else {
+          tbody.innerHTML = txs.slice(0, 5).map(t => `
+            <tr>
+              <td>${formatDate(t.created_at)}</td>
+              <td><strong>${t.merchant_name}</strong></td>
+              <td><span class="badge ${t.transaction_type === 'topup' ? 'badge-info' : 'badge-basic'}">${t.transaction_type.toUpperCase()}</span></td>
+              <td style="font-weight: 600;">₹${t.amount_rupees.toFixed(2)}</td>
+              <td style="color: var(--accent); font-weight: 600;">${t.cashback_rupees > 0 ? '+₹' + t.cashback_rupees.toFixed(2) : '-'}</td>
+              <td>${renderStatusBadge(t.status)}</td>
+            </tr>
+          `).join('');
+        }
+      } catch (err) {
+        console.error('Error loading dashboard:', err);
+      }
+    }
+  </script>
+</body>
+</html>

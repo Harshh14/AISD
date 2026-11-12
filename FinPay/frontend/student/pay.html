@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pay Merchant – FinPay</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span>FinPay</span>
+        <span class="brand-badge">Student</span>
+      </div>
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.html">&#128202; Dashboard</a></li>
+        <li><a href="wallet.html">&#128176; My Wallet</a></li>
+        <li><a href="pay.html" class="active">&#128184; Pay Merchant</a></li>
+        <li><a href="transactions.html">&#128220; History</a></li>
+        <li><a href="cashback.html">&#127873; Cashback & Tiers</a></li>
+        <li><a href="profile.html">&#128100; Profile</a></li>
+        <li><a href="#" onclick="logout(); return false;">&#128682; Logout</a></li>
+      </ul>
+      <div class="sidebar-user">
+        <div class="user-name" id="user-display-name">Loading...</div>
+        <div class="user-role-tier" id="user-display-role">Student</div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">Make a Campus Payment</h1>
+          <p class="page-subtitle">Pay registered merchants and earn instant cashback</p>
+        </div>
+        <div style="background: #ffffff; padding: 0.6rem 1.25rem; border-radius: 8px; border: 1px solid var(--border); text-align: right;">
+          <div style="font-size: 0.78rem; color: var(--text-muted); text-transform: uppercase;">Available Balance</div>
+          <div style="font-size: 1.25rem; font-weight: 700; color: var(--primary);" id="top-wallet-balance">₹0.00</div>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 3fr 2fr; gap: 2rem;">
+        <!-- Payment Form -->
+        <div class="card">
+          <h2 class="card-title" style="margin-bottom: 1.25rem;">Payment Details</h2>
+          <div id="payment-alert" class="alert" style="display: none;"></div>
+
+          <form id="payment-form">
+            <div class="form-group">
+              <label class="form-label" for="merchant-select">Select Campus Merchant</label>
+              <select id="merchant-select" class="form-control" required>
+                <option value="">-- Choose a Merchant --</option>
+              </select>
+              <div id="merchant-info" class="form-hint" style="display: none;"></div>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label" for="payment-amount">Payment Amount (₹)</label>
+              <input type="number" id="payment-amount" class="form-control" placeholder="e.g. 250" min="1" step="0.5" required>
+            </div>
+
+            <!-- Cashback preview notice -->
+            <div id="cashback-preview-box" style="display: none; background: var(--accent-light); border: 1px solid #99f6e4; padding: 0.9rem; border-radius: 8px; margin-bottom: 1.25rem; font-size: 0.88rem; color: #0f766e;">
+              <strong>Estimated Cashback:</strong> <span id="preview-cashback-text">Calculating...</span>
+            </div>
+
+            <button type="submit" id="pay-btn" class="btn btn-primary" style="width: 100%; font-size: 1rem; padding: 0.85rem;">
+              Confirm & Pay Merchant
+            </button>
+          </form>
+        </div>
+
+        <!-- Receipt / Result Card -->
+        <div>
+          <div class="card" id="receipt-card" style="display: none; border-top: 4px solid var(--success);">
+            <div style="text-align: center; margin-bottom: 1.25rem;">
+              <div style="font-size: 2.5rem; color: var(--success);">&#10004;</div>
+              <h3 style="color: var(--primary); font-size: 1.3rem;">Payment Successful!</h3>
+              <div style="font-size: 0.85rem; color: var(--text-muted);" id="receipt-date">-</div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 0.75rem; font-size: 0.92rem; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 1rem 0; margin-bottom: 1.25rem;">
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--text-muted);">Merchant:</span>
+                <strong id="receipt-merchant">-</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--text-muted);">Category:</span>
+                <span id="receipt-category">-</span>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--text-muted);">Amount Paid:</span>
+                <strong id="receipt-amount" style="color: var(--primary);">-</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--text-muted);">Cashback Earned:</span>
+                <strong id="receipt-cashback" style="color: var(--accent);">-</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span style="color: var(--text-muted);">Idempotency Key:</span>
+                <code style="font-size: 0.78rem;" id="receipt-key">-</code>
+              </div>
+            </div>
+
+            <button class="btn btn-outline" style="width: 100%;" onclick="resetPaymentForm()">Make Another Payment</button>
+          </div>
+
+          <!-- Merchant Category Cashback Rates Reference Card -->
+          <div class="card">
+            <h3 class="card-title" style="font-size: 1rem; margin-bottom: 0.75rem;">Category Cashback Rates</h3>
+            <p style="font-size: 0.82rem; color: var(--text-muted); margin-bottom: 0.75rem;">
+              Multiplied by your <strong id="current-tier-name">BASIC</strong> tier multiplier:
+            </p>
+            <div id="rules-quick-list" style="font-size: 0.85rem; display: flex; flex-direction: column; gap: 0.4rem;">
+              Loading rules...
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    let merchantsList = [];
+    let cashbackRules = [];
+    let studentTier = 'BASIC';
+
+    if (requireAuth(['student'])) {
+      initSidebarUser();
+      loadPayPageData();
+    }
+
+    async function loadPayPageData() {
+      try {
+        const wallet = await apiFetch('/api/wallet');
+        document.getElementById('top-wallet-balance').textContent = formatRupees(wallet.balance_rupees);
+
+        const me = await apiFetch('/api/auth/me');
+        studentTier = me.membership_tier || 'BASIC';
+        document.getElementById('current-tier-name').textContent = studentTier;
+
+        // Load active merchants
+        merchantsList = await apiFetch('/api/merchants');
+        const select = document.getElementById('merchant-select');
+        select.innerHTML = '<option value="">-- Choose a Merchant --</option>' +
+          merchantsList.map(m => `<option value="${m.id}">${m.merchant_name} (${m.category})</option>`).join('');
+
+        // Load rules
+        cashbackRules = await apiFetch('/api/cashback/rules');
+        const rulesListEl = document.getElementById('rules-quick-list');
+        rulesListEl.innerHTML = cashbackRules.map(r => {
+          let effRate = r.base_cashback_rate_pct;
+          let effCap = r.base_monthly_cap_rupees;
+          if (studentTier === 'PRIME') {
+            effRate = r.prime_cashback_rate_pct;
+            effCap = r.prime_monthly_cap_rupees;
+          } else if (studentTier === 'PREMIUM') {
+            effRate = r.premium_cashback_rate_pct;
+            effCap = r.premium_monthly_cap_rupees;
+          }
+          return `
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px dashed var(--border); padding-bottom: 0.25rem;">
+              <span>${r.category}</span>
+              <span style="font-weight: 600; color: var(--accent);">${effRate}% (Cap: ₹${effCap})</span>
+            </div>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    // Update preview when merchant or amount changes
+    document.getElementById('merchant-select').addEventListener('change', updatePreview);
+    document.getElementById('payment-amount').addEventListener('input', updatePreview);
+
+    function updatePreview() {
+      const merchantId = parseInt(document.getElementById('merchant-select').value);
+      const amt = parseFloat(document.getElementById('payment-amount').value);
+      const previewBox = document.getElementById('cashback-preview-box');
+      const merchantInfo = document.getElementById('merchant-info');
+
+      if (!merchantId) {
+        previewBox.style.display = 'none';
+        merchantInfo.style.display = 'none';
+        return;
+      }
+
+      const merchant = merchantsList.find(m => m.id === merchantId);
+      if (merchant) {
+        merchantInfo.style.display = 'block';
+        merchantInfo.textContent = `${merchant.description || ''} • Category: ${merchant.category}`;
+
+        const rule = cashbackRules.find(r => r.category === merchant.category);
+        if (rule && !isNaN(amt) && amt > 0) {
+          previewBox.style.display = 'block';
+          let ratePct = rule.base_cashback_rate_pct;
+          if (studentTier === 'PRIME') ratePct = rule.prime_cashback_rate_pct;
+          if (studentTier === 'PREMIUM') ratePct = rule.premium_cashback_rate_pct;
+
+          const estRaw = Math.floor(amt * (ratePct / 100));
+          document.getElementById('preview-cashback-text').textContent = 
+            `~ ₹${estRaw.toFixed(2)} (${ratePct}% rate) subject to remaining monthly cap`;
+        } else {
+          previewBox.style.display = 'none';
+        }
+      }
+    }
+
+    document.getElementById('payment-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const alertBox = document.getElementById('payment-alert');
+      alertBox.style.display = 'none';
+
+      const merchantId = parseInt(document.getElementById('merchant-select').value);
+      const amount = parseFloat(document.getElementById('payment-amount').value);
+
+      if (!merchantId || isNaN(amount) || amount <= 0) {
+        alertBox.className = 'alert alert-danger';
+        alertBox.textContent = 'Please choose a merchant and enter an amount greater than 0.';
+        alertBox.style.display = 'block';
+        return;
+      }
+
+      const btn = document.getElementById('pay-btn');
+      btn.disabled = true;
+      btn.textContent = 'Processing Payment...';
+
+      try {
+        const idempotencyKey = generateIdempotencyKey();
+        const tx = await apiFetch('/api/payments', {
+          method: 'POST',
+          body: JSON.stringify({
+            merchant_id: merchantId,
+            amount_rupees: amount,
+            idempotency_key: idempotencyKey
+          })
+        });
+
+        // Show receipt
+        document.getElementById('receipt-card').style.display = 'block';
+        document.getElementById('receipt-date').textContent = formatDate(tx.created_at);
+        document.getElementById('receipt-merchant').textContent = tx.merchant_name;
+        document.getElementById('receipt-category').textContent = tx.merchant_category;
+        document.getElementById('receipt-amount').textContent = `₹${tx.amount_rupees.toFixed(2)}`;
+        document.getElementById('receipt-cashback').textContent = tx.cashback_rupees > 0 
+          ? `+₹${tx.cashback_rupees.toFixed(2)}` 
+          : '₹0.00 (Cap reached or 0%)';
+        document.getElementById('receipt-key').textContent = tx.idempotency_key;
+
+        alertBox.className = 'alert alert-success';
+        alertBox.textContent = 'Payment completed successfully!';
+        alertBox.style.display = 'block';
+
+        // Refresh top balance
+        const wallet = await apiFetch('/api/wallet');
+        document.getElementById('top-wallet-balance').textContent = formatRupees(wallet.balance_rupees);
+
+        // Hide form button
+        btn.style.display = 'none';
+      } catch (err) {
+        alertBox.className = 'alert alert-danger';
+        alertBox.textContent = err.message;
+        alertBox.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Confirm & Pay Merchant';
+      }
+    });
+
+    function resetPaymentForm() {
+      document.getElementById('payment-form').reset();
+      document.getElementById('receipt-card').style.display = 'none';
+      document.getElementById('cashback-preview-box').style.display = 'none';
+      document.getElementById('merchant-info').style.display = 'none';
+      document.getElementById('payment-alert').style.display = 'none';
+      document.getElementById('pay-btn').style.display = 'block';
+    }
+  </script>
+</body>
+</html>

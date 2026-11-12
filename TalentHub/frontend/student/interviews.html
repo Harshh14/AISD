@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Interviews – TalentHub</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <div id="spinner" class="spinner-overlay"><div class="spinner"></div></div>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><h2><i class="fas fa-graduation-cap"></i> TalentHub</h2><span>Student Portal</span></div>
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Main</div>
+        <a href="dashboard.html" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="profile.html" class="nav-link"><i class="fas fa-user"></i> My Profile</a>
+        <div class="nav-section-label">Placement</div>
+        <a href="jobs.html" class="nav-link"><i class="fas fa-briefcase"></i> Browse Jobs</a>
+        <a href="applications.html" class="nav-link"><i class="fas fa-file-alt"></i> Applications</a>
+        <a href="interviews.html" class="nav-link active"><i class="fas fa-calendar-check"></i> Interviews</a>
+        <a href="offers.html" class="nav-link"><i class="fas fa-file-contract"></i> Offers</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-info"><div class="user-avatar" id="sidebar-avatar">S</div><div><div class="user-name" id="sidebar-user-name">Student</div><div class="user-role" id="sidebar-user-role">Student</div></div></div>
+        <button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+      </div>
+    </aside>
+    <main class="main-content">
+      <div class="top-bar"><h1>My Interviews</h1></div>
+      <div class="page-content">
+        <div id="interviews-container"></div>
+      </div>
+    </main>
+  </div>
+  <script src="../js/api.js"></script>
+  <script>
+    requireAuth('student');
+    renderSidebarUser();
+
+    (async () => {
+      showLoading();
+      try {
+        const { data } = await api('/interviews/me');
+        const container = document.getElementById('interviews-container');
+        if (!data.length) { container.innerHTML = '<div class="card" style="text-align:center; color:var(--text-muted); padding:40px;"><i class="fas fa-calendar" style="font-size:2rem;"></i><p style="margin-top:12px;">No interviews scheduled yet.</p></div>'; return; }
+        container.innerHTML = data.map(i => `
+          <div class="card" style="margin-bottom:20px; border-left: 4px solid ${i.status==='Scheduled'?'var(--accent)':i.result==='Passed'?'var(--success)':i.result==='Failed'?'var(--danger)':'var(--warning)'};">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+              <div>
+                <h3 style="margin-bottom:4px;">${i.job?.title || 'Interview'}</h3>
+                <div style="color:var(--text-muted); font-size:0.85rem;">${i.job?.company?.companyName || ''}</div>
+              </div>
+              <div style="text-align:right;">
+                ${statusBadge(i.status)} &nbsp; ${i.result !== 'Pending' ? statusBadge(i.result) : ''}
+              </div>
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:16px; margin-top:14px; font-size:0.85rem; color:var(--text-muted);">
+              <span><i class="fas fa-clock"></i> ${formatDateTime(i.interviewDate)}</span>
+              <span><i class="fas fa-layer-group"></i> Round ${i.round} – ${i.interviewType}</span>
+              ${i.venue ? `<span><i class="fas fa-map-marker-alt"></i> ${i.venue}</span>` : ''}
+              ${i.meetingLink ? `<span><i class="fas fa-video"></i> <a href="${i.meetingLink}" target="_blank" style="color:var(--accent);">Join Meeting</a></span>` : ''}
+              ${i.score ? `<span><i class="fas fa-star"></i> Score: ${i.score}</span>` : ''}
+            </div>
+            ${i.instructions ? `<div style="margin-top:10px; padding:10px 14px; background:rgba(52,152,219,0.07); border-radius:8px; font-size:0.82rem; color:var(--primary);"><i class="fas fa-info-circle"></i> <strong>Instructions:</strong> ${i.instructions}</div>` : ''}
+            ${i.feedback ? `<div style="margin-top:10px; padding:10px 14px; background:var(--bg); border-radius:8px; font-size:0.82rem;"><i class="fas fa-comment"></i> <strong>Feedback:</strong> ${i.feedback}</div>` : ''}
+          </div>`).join('');
+      } catch(e) { showToast(e.message,'error'); }
+      hideLoading();
+    })();
+  </script>
+</body>
+</html>

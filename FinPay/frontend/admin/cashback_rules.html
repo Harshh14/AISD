@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cashback Rules – FinPay Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span>FinPay</span>
+        <span class="brand-badge" style="background: #fef3c7; color: #92400e;">Admin</span>
+      </div>
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.html">&#128202; System Overview</a></li>
+        <li><a href="students.html">&#127891; Student Management</a></li>
+        <li><a href="merchants.html">&#127978; Merchant Management</a></li>
+        <li><a href="cashback_rules.html" class="active">&#128295; Cashback Rules</a></li>
+        <li><a href="transactions.html">&#128220; All Transactions</a></li>
+        <li><a href="#" onclick="logout(); return false;">&#128682; Logout</a></li>
+      </ul>
+      <div class="sidebar-user">
+        <div class="user-name" id="user-display-name">Campus Admin</div>
+        <div class="user-role-tier" id="user-display-role">System Administrator</div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">Campus Cashback Policy & Tier Rules</h1>
+          <p class="page-subtitle">Standardized category rates, multipliers, and calendar-month limit matrix</p>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <h2 class="card-title">Active Cashback Rules Matrix</h2>
+          <span class="badge badge-success">SQL Database Ground Truth</span>
+        </div>
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Merchant Category</th>
+                <th>BASIC (1.0x Rate)</th>
+                <th>BASIC Cap</th>
+                <th>PRIME (1.5x Rate)</th>
+                <th>PRIME Cap</th>
+                <th>PREMIUM (2.0x Rate)</th>
+                <th>PREMIUM Cap</th>
+              </tr>
+            </thead>
+            <tbody id="rules-matrix-tbody">
+              <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Loading rules matrix...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="card" style="background: #f8fafc;">
+        <h3 style="color: var(--primary); margin-bottom: 0.75rem;">Cashback Calculation Policy & Edge Cases</h3>
+        <ul style="padding-left: 1.5rem; color: var(--text); font-size: 0.92rem; line-height: 1.7;">
+          <li><strong>Zero Float Arithmetic:</strong> All financial calculations use integer paise internally (₹1 = 100 paise) with floor division (<code>//</code>).</li>
+          <li><strong>Multipliers:</strong> PRIME applies 1.5x multiplier (<code>bps * 150 // 100</code>), PREMIUM applies 2.0x multiplier (<code>bps * 200 // 100</code>).</li>
+          <li><strong>Monthly Caps:</strong> Enforced per student, per merchant category, per calendar month. Once a student reaches the cap, subsequent payments earn 0 cashback.</li>
+          <li><strong>Idempotency:</strong> Every payment carries a unique idempotency key. Duplicate submissions return the existing transaction without double deduction.</li>
+          <li><strong>Top-ups:</strong> Wallet top-ups receive exactly 0% cashback and are exempt from category caps.</li>
+        </ul>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    if (requireAuth(['admin'])) {
+      initSidebarUser();
+      loadRules();
+    }
+
+    async function loadRules() {
+      try {
+        const rules = await apiFetch('/api/cashback/rules');
+        const tbody = document.getElementById('rules-matrix-tbody');
+
+        tbody.innerHTML = rules.map(r => `
+          <tr>
+            <td><strong>${r.category}</strong></td>
+            <td><span class="badge badge-basic">${r.base_cashback_rate_pct}%</span></td>
+            <td>₹${r.base_monthly_cap_rupees.toFixed(2)}</td>
+            <td><span class="badge badge-prime">${r.prime_cashback_rate_pct}%</span></td>
+            <td>₹${r.prime_monthly_cap_rupees.toFixed(2)}</td>
+            <td><span class="badge badge-premium">${r.premium_cashback_rate_pct}%</span></td>
+            <td><strong>₹${r.premium_monthly_cap_rupees.toFixed(2)}</strong></td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Management – FinPay Admin</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span>FinPay</span>
+        <span class="brand-badge" style="background: #fef3c7; color: #92400e;">Admin</span>
+      </div>
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.html">&#128202; System Overview</a></li>
+        <li><a href="students.html" class="active">&#127891; Student Management</a></li>
+        <li><a href="merchants.html">&#127978; Merchant Management</a></li>
+        <li><a href="cashback_rules.html">&#128295; Cashback Rules</a></li>
+        <li><a href="transactions.html">&#128220; All Transactions</a></li>
+        <li><a href="#" onclick="logout(); return false;">&#128682; Logout</a></li>
+      </ul>
+      <div class="sidebar-user">
+        <div class="user-name" id="user-display-name">Campus Admin</div>
+        <div class="user-role-tier" id="user-display-role">System Administrator</div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">Student Accounts & Tier Management</h1>
+          <p class="page-subtitle">Assign membership tiers (BASIC, PRIME, PREMIUM) to student wallets</p>
+        </div>
+      </div>
+
+      <div id="action-alert" class="alert" style="display: none;"></div>
+
+      <div class="card">
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Student ID</th>
+                <th>Name</th>
+                <th>College Email</th>
+                <th>Current Tier</th>
+                <th>Enrolled Date</th>
+                <th>Assign Tier</th>
+              </tr>
+            </thead>
+            <tbody id="students-tbody">
+              <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading students...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    if (requireAuth(['admin'])) {
+      initSidebarUser();
+      loadStudents();
+    }
+
+    async function loadStudents() {
+      try {
+        const students = await apiFetch('/api/admin/students');
+        const tbody = document.getElementById('students-tbody');
+
+        if (students.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No student accounts found.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = students.map(s => {
+          const currentTier = s.membership_tier || 'BASIC';
+          return `
+            <tr>
+              <td><code>#STU-${s.id}</code></td>
+              <td><strong>${s.name}</strong></td>
+              <td>${s.email}</td>
+              <td id="tier-cell-${s.id}">${renderTierBadge(currentTier)}</td>
+              <td>${formatDate(s.created_at)}</td>
+              <td>
+                <div style="display: flex; gap: 0.5rem; align-items: center;">
+                  <select id="select-tier-${s.id}" class="form-control form-control-sm" style="width: auto; padding: 0.3rem 0.5rem; font-size: 0.85rem;">
+                    <option value="BASIC" ${currentTier === 'BASIC' ? 'selected' : ''}>BASIC (1x)</option>
+                    <option value="PRIME" ${currentTier === 'PRIME' ? 'selected' : ''}>PRIME (1.5x)</option>
+                    <option value="PREMIUM" ${currentTier === 'PREMIUM' ? 'selected' : ''}>PREMIUM (2x)</option>
+                  </select>
+                  <button class="btn btn-primary btn-sm" onclick="saveTier(${s.id})">Update</button>
+                </div>
+              </td>
+            </tr>
+          `;
+        }).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function saveTier(studentId) {
+      const select = document.getElementById(`select-tier-${studentId}`);
+      const newTier = select.value;
+      const alertBox = document.getElementById('action-alert');
+      alertBox.style.display = 'none';
+
+      try {
+        const res = await apiFetch(`/api/admin/students/${studentId}/tier`, {
+          method: 'PUT',
+          body: JSON.stringify({ membership_tier: newTier })
+        });
+
+        // Update badge in table
+        document.getElementById(`tier-cell-${studentId}`).innerHTML = renderTierBadge(newTier);
+
+        alertBox.className = 'alert alert-success';
+        alertBox.textContent = `Updated ${res.name}'s membership tier to ${newTier}!`;
+        alertBox.style.display = 'block';
+        setTimeout(() => { alertBox.style.display = 'none'; }, 4000);
+      } catch (err) {
+        alertBox.className = 'alert alert-danger';
+        alertBox.textContent = err.message;
+        alertBox.style.display = 'block';
+      }
+    }
+  </script>
+</body>
+</html>

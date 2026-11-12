@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Registration – FinPay Campus Wallet</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-header">
+        <a href="index.html" class="brand" style="justify-content: center; margin-bottom: 0.75rem;">FinPay</a>
+        <h2>Student Registration</h2>
+        <p>Create your campus wallet account and start earning cashback</p>
+      </div>
+
+      <div id="alert-box" class="alert alert-danger" style="display: none;"></div>
+
+      <form id="register-form">
+        <div class="form-group">
+          <label class="form-label" for="name">Full Name</label>
+          <input type="text" id="name" class="form-control" placeholder="Aarav Sharma" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="email">College Email ID</label>
+          <input type="email" id="email" class="form-control" placeholder="aarav@student.edu" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="password">Password</label>
+          <input type="password" id="password" class="form-control" placeholder="At least 6 characters" minlength="6" required>
+          <div class="form-hint">New students start at the <strong>BASIC</strong> tier (can be upgraded by Admin).</div>
+        </div>
+
+        <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;">Register Student Account</button>
+      </form>
+
+      <div style="margin-top: 1.5rem; text-align: center; font-size: 0.9rem; color: var(--text-muted);">
+        Already registered? <a href="login.html">Sign In</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/auth.js"></script>
+</body>
+</html>

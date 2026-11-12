@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Offers – TalentHub</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <div id="spinner" class="spinner-overlay"><div class="spinner"></div></div>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><h2><i class="fas fa-graduation-cap"></i> TalentHub</h2><span>Student Portal</span></div>
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Main</div>
+        <a href="dashboard.html" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="profile.html" class="nav-link"><i class="fas fa-user"></i> My Profile</a>
+        <div class="nav-section-label">Placement</div>
+        <a href="jobs.html" class="nav-link"><i class="fas fa-briefcase"></i> Browse Jobs</a>
+        <a href="applications.html" class="nav-link"><i class="fas fa-file-alt"></i> Applications</a>
+        <a href="interviews.html" class="nav-link"><i class="fas fa-calendar-check"></i> Interviews</a>
+        <a href="offers.html" class="nav-link active"><i class="fas fa-file-contract"></i> Offers</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-info"><div class="user-avatar" id="sidebar-avatar">S</div><div><div class="user-name" id="sidebar-user-name">Student</div><div class="user-role" id="sidebar-user-role">Student</div></div></div>
+        <button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+      </div>
+    </aside>
+    <main class="main-content">
+      <div class="top-bar"><h1>My Offers</h1></div>
+      <div class="page-content">
+        <div id="offers-container"></div>
+      </div>
+    </main>
+  </div>
+  <!-- Decision Modal -->
+  <div class="modal-overlay" id="decisionModal">
+    <div class="modal">
+      <div class="modal-header"><h3 id="decision-title">Offer Decision</h3><button class="modal-close" onclick="closeModal('decisionModal')">&times;</button></div>
+      <div id="decision-info" style="margin-bottom:20px;"></div>
+      <p style="margin-bottom:20px; color:var(--text-muted);">This action is final. Please choose carefully.</p>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('decisionModal')">Cancel</button>
+        <button class="btn btn-danger" id="declineBtn"><i class="fas fa-times"></i> Decline Offer</button>
+        <button class="btn btn-success" id="acceptBtn"><i class="fas fa-check"></i> Accept Offer</button>
+      </div>
+    </div>
+  </div>
+  <script src="../js/api.js"></script>
+  <script>
+    requireAuth('student');
+    renderSidebarUser();
+    let currentOfferId = null;
+
+    const loadOffers = async () => {
+      showLoading();
+      try {
+        const { data } = await api('/offers/me');
+        const container = document.getElementById('offers-container');
+        if (!data.length) { container.innerHTML = '<div class="card" style="text-align:center; color:var(--text-muted); padding:40px;"><i class="fas fa-file-contract" style="font-size:2rem;"></i><p style="margin-top:12px;">No offers received yet.</p></div>'; return; }
+        container.innerHTML = data.map(o => `
+          <div class="card" style="margin-bottom:20px; border-left:4px solid ${o.status==='Accepted'?'var(--success)':o.status==='Declined'?'var(--danger)':'var(--purple)'};">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; flex-wrap:wrap; gap:12px;">
+              <div>
+                <h3>${o.designation || o.job?.title || 'Offer'}</h3>
+                <div style="color:var(--text-muted); font-size:0.85rem;">${o.company?.companyName || ''} · ${o.job?.location || ''}</div>
+              </div>
+              ${statusBadge(o.status)}
+            </div>
+            <div style="display:flex; flex-wrap:wrap; gap:20px; margin-top:16px;">
+              <div style="text-align:center;">
+                <div style="font-size:1.6rem; font-weight:800; color:var(--success);">${formatCTC(o.ctc)}</div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">CTC Package</div>
+              </div>
+              ${o.joiningDate ? `<div style="text-align:center;"><div style="font-size:1rem; font-weight:700; color:var(--primary);">${formatDate(o.joiningDate)}</div><div style="font-size:0.75rem; color:var(--text-muted);">Joining Date</div></div>` : ''}
+              ${o.expiryDate ? `<div style="text-align:center;"><div style="font-size:1rem; font-weight:700; color:var(--warning);">${formatDate(o.expiryDate)}</div><div style="font-size:0.75rem; color:var(--text-muted);">Offer Expires</div></div>` : ''}
+            </div>
+            ${o.remarks ? `<div style="margin-top:12px; font-size:0.85rem; color:var(--text-muted);">${o.remarks}</div>` : ''}
+            ${o.status === 'Issued' ? `<div style="margin-top:16px;"><button class="btn btn-success btn-sm" onclick="openDecision(${o.id},'${(o.designation||o.job?.title||'Offer').replace(/'/g,"\\'")}','${o.company?.companyName?.replace(/'/g,"\\'")||''}')"><i class="fas fa-reply"></i> Respond to Offer</button></div>` : ''}
+          </div>`).join('');
+      } catch(e) { showToast(e.message,'error'); }
+      hideLoading();
+    };
+
+    loadOffers();
+
+    const openDecision = (offerId, title, company) => {
+      currentOfferId = offerId;
+      document.getElementById('decision-title').textContent = `Respond to Offer`;
+      document.getElementById('decision-info').innerHTML = `<strong>${title}</strong> at <strong>${company}</strong>`;
+      openModal('decisionModal');
+    };
+
+    const makeDecision = async (decision) => {
+      try {
+        await api(`/offers/${currentOfferId}/decision`, { method: 'PUT', body: JSON.stringify({ decision }) });
+        closeModal('decisionModal');
+        showToast(`Offer ${decision}d successfully!`, decision === 'accept' ? 'success' : 'info');
+        loadOffers();
+      } catch(err) { showToast(err.message, 'error'); }
+    };
+
+    document.getElementById('acceptBtn').addEventListener('click', () => makeDecision('accept'));
+    document.getElementById('declineBtn').addEventListener('click', () => makeDecision('decline'));
+  </script>
+</body>
+</html>

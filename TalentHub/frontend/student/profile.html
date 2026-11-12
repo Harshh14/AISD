@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Profile – TalentHub</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <div id="spinner" class="spinner-overlay"><div class="spinner"></div></div>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><h2><i class="fas fa-graduation-cap"></i> TalentHub</h2><span>Student Portal</span></div>
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Main</div>
+        <a href="dashboard.html" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="profile.html" class="nav-link active"><i class="fas fa-user"></i> My Profile</a>
+        <div class="nav-section-label">Placement</div>
+        <a href="jobs.html" class="nav-link"><i class="fas fa-briefcase"></i> Browse Jobs</a>
+        <a href="applications.html" class="nav-link"><i class="fas fa-file-alt"></i> Applications</a>
+        <a href="interviews.html" class="nav-link"><i class="fas fa-calendar-check"></i> Interviews</a>
+        <a href="offers.html" class="nav-link"><i class="fas fa-file-contract"></i> Offers</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-info"><div class="user-avatar" id="sidebar-avatar">S</div><div><div class="user-name" id="sidebar-user-name">Student</div><div class="user-role" id="sidebar-user-role">Student</div></div></div>
+        <button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+      </div>
+    </aside>
+    <main class="main-content">
+      <div class="top-bar"><h1>My Profile</h1></div>
+      <div class="page-content">
+        <div id="alert-box"></div>
+        <div style="display:grid; grid-template-columns: 280px 1fr; gap:24px; align-items:start;">
+          <!-- Profile card -->
+          <div class="card" style="text-align:center;">
+            <div style="width:80px; height:80px; border-radius:50%; background:linear-gradient(135deg,var(--primary),var(--accent)); display:flex; align-items:center; justify-content:center; font-size:2rem; color:#fff; margin:0 auto 16px;" id="profile-avatar">S</div>
+            <h3 id="profile-name" style="font-size:1.1rem; margin-bottom:4px;">Loading...</h3>
+            <p id="profile-email" style="color:var(--text-muted); font-size:0.85rem;"></p>
+            <div id="placed-status" style="margin:12px 0; display:none;"><span class="badge badge-success"><i class="fas fa-trophy"></i> PLACED</span></div>
+            <div id="profile-status" style="margin-top:12px;"></div>
+          </div>
+          <!-- Edit form -->
+          <div class="card">
+            <h3 style="margin-bottom:20px; color:var(--primary);">Edit Profile Information</h3>
+            <form id="profileForm">
+              <div class="form-row">
+                <div class="form-group"><label>Roll Number</label><input type="text" id="rollNumber" class="form-control" placeholder="ROLL2025001"></div>
+                <div class="form-group"><label>Branch / Department</label>
+                  <select id="branch" class="form-control">
+                    <option value="">Select Branch</option>
+                    <option>CSE</option><option>CSAI</option><option>IT</option><option>ECE</option><option>EEE</option><option>ME</option><option>CE</option><option>MCA</option><option>MBA</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>CGPA (out of 10)</label><input type="number" id="cgpa" class="form-control" step="0.01" min="0" max="10" placeholder="8.50"></div>
+                <div class="form-group"><label>Active Backlogs</label><input type="number" id="activeBacklogs" class="form-control" min="0" placeholder="0"></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Phone Number</label><input type="tel" id="phone" class="form-control" placeholder="9876543210"></div>
+                <div class="form-group"><label>Graduation Year</label><input type="number" id="graduationYear" class="form-control" min="2024" max="2030" placeholder="2025"></div>
+              </div>
+              <div class="form-row">
+                <div class="form-group"><label>Degree</label><input type="text" id="degree" class="form-control" placeholder="B.Tech"></div>
+                <div class="form-group"><label>Resume URL</label><input type="url" id="resume" class="form-control" placeholder="https://drive.google.com/..."></div>
+              </div>
+              <div class="form-group"><label>Skills (comma separated)</label><input type="text" id="skills" class="form-control" placeholder="JavaScript, Python, SQL, React"></div>
+              <button type="submit" class="btn btn-primary"><i class="fas fa-save"></i> Save Profile</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="../js/api.js"></script>
+  <script>
+    requireAuth('student');
+    renderSidebarUser();
+
+    const fillForm = (s) => {
+      document.getElementById('rollNumber').value = s.rollNumber || '';
+      document.getElementById('branch').value = s.branch || '';
+      document.getElementById('cgpa').value = s.cgpa || '';
+      document.getElementById('activeBacklogs').value = s.activeBacklogs ?? 0;
+      document.getElementById('phone').value = s.phone || '';
+      document.getElementById('graduationYear').value = s.graduationYear || '';
+      document.getElementById('degree').value = s.degree || '';
+      document.getElementById('resume').value = s.resume || '';
+      document.getElementById('skills').value = Array.isArray(s.skills) ? s.skills.join(', ') : '';
+      const user = getUser();
+      document.getElementById('profile-name').textContent = user?.name || 'Student';
+      document.getElementById('profile-email').textContent = user?.email || '';
+      document.getElementById('profile-avatar').textContent = (user?.name || 'S').charAt(0).toUpperCase();
+      if (s.isPlaced) document.getElementById('placed-status').style.display = 'block';
+      document.getElementById('profile-status').innerHTML = s.profileComplete
+        ? '<span class="badge badge-success"><i class="fas fa-check-circle"></i> Profile Complete</span>'
+        : '<span class="badge badge-warning"><i class="fas fa-exclamation-triangle"></i> Profile Incomplete</span>';
+    };
+
+    (async () => {
+      showLoading();
+      try { const { data } = await api('/students/me'); fillForm(data); } catch(e) { showToast(e.message,'error'); }
+      hideLoading();
+    })();
+
+    document.getElementById('profileForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const alertBox = document.getElementById('alert-box');
+      const skillsVal = document.getElementById('skills').value.split(',').map(s => s.trim()).filter(Boolean);
+      try {
+        const { data } = await api('/students/me', { method: 'PUT', body: JSON.stringify({
+          rollNumber: document.getElementById('rollNumber').value,
+          branch: document.getElementById('branch').value,
+          cgpa: parseFloat(document.getElementById('cgpa').value) || null,
+          activeBacklogs: parseInt(document.getElementById('activeBacklogs').value) || 0,
+          phone: document.getElementById('phone').value,
+          graduationYear: parseInt(document.getElementById('graduationYear').value) || null,
+          degree: document.getElementById('degree').value,
+          resume: document.getElementById('resume').value,
+          skills: skillsVal,
+        })});
+        fillForm(data);
+        showToast('Profile updated successfully!');
+      } catch(err) { showToast(err.message, 'error'); }
+    });
+  </script>
+</body>
+</html>

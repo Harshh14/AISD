@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Dashboard – FinPay</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span>FinPay</span>
+        <span class="brand-badge" style="background: #fef3c7; color: #92400e;">Admin</span>
+      </div>
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.html" class="active">&#128202; System Overview</a></li>
+        <li><a href="students.html">&#127891; Student Management</a></li>
+        <li><a href="merchants.html">&#127978; Merchant Management</a></li>
+        <li><a href="cashback_rules.html">&#128295; Cashback Rules</a></li>
+        <li><a href="transactions.html">&#128220; All Transactions</a></li>
+        <li><a href="#" onclick="logout(); return false;">&#128682; Logout</a></li>
+      </ul>
+      <div class="sidebar-user">
+        <div class="user-name" id="user-display-name">Campus Admin</div>
+        <div class="user-role-tier" id="user-display-role">System Administrator</div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">Campus Wallet Administration</h1>
+          <p class="page-subtitle">Real-time statistics, ledger audit, and membership tier control</p>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-label">Total Students</div>
+          <div class="stat-value" id="total-students">0</div>
+          <div class="stat-desc">Enrolled student digital wallets</div>
+        </div>
+
+        <div class="stat-card accent">
+          <div class="stat-label">Registered Merchants</div>
+          <div class="stat-value" id="total-merchants">0</div>
+          <div class="stat-desc">Campus stores and facilities</div>
+        </div>
+
+        <div class="stat-card warning">
+          <div class="stat-label">Total Transactions</div>
+          <div class="stat-value" id="total-transactions">0</div>
+          <div class="stat-desc">Payments and wallet top-ups</div>
+        </div>
+
+        <div class="stat-card success">
+          <div class="stat-label">Gross Payments Volume</div>
+          <div class="stat-value" id="total-payments">₹0.00</div>
+          <div class="stat-desc">Total student spend at campus stores</div>
+        </div>
+
+        <div class="stat-card" style="border-top-color: #8b5cf6;">
+          <div class="stat-label">Total Cashback Distributed</div>
+          <div class="stat-value" id="total-cashback">₹0.00</div>
+          <div class="stat-desc">Credited rewards to student wallets</div>
+        </div>
+      </div>
+
+      <!-- Tier Distribution & Recent Transactions -->
+      <div style="display: grid; grid-template-columns: 1fr 2fr; gap: 1.5rem;">
+        <!-- Tier Distribution Card -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Student Tier Distribution</h2>
+            <a href="students.html" class="btn btn-outline btn-sm">Manage</a>
+          </div>
+          <div id="tier-breakdown-list" style="display: flex; flex-direction: column; gap: 1rem; margin-top: 0.5rem;">
+            Loading tier distribution...
+          </div>
+        </div>
+
+        <!-- Recent System Transactions -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Recent System Transactions</h2>
+            <a href="transactions.html" class="btn btn-outline btn-sm">Audit All</a>
+          </div>
+          <div class="table-container">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>Timestamp</th>
+                  <th>Student</th>
+                  <th>Merchant / Activity</th>
+                  <th>Amount</th>
+                  <th>Cashback</th>
+                  <th>Status</th>
+                </tr>
+              </thead>
+              <tbody id="recent-admin-tx-tbody">
+                <tr><td colspan="6" style="text-align: center; color: var(--text-muted);">Loading system transactions...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    if (requireAuth(['admin'])) {
+      initSidebarUser();
+      loadAdminDashboard();
+    }
+
+    async function loadAdminDashboard() {
+      try {
+        const stats = await apiFetch('/api/admin/dashboard');
+
+        document.getElementById('total-students').textContent = stats.total_students;
+        document.getElementById('total-merchants').textContent = stats.total_merchants;
+        document.getElementById('total-transactions').textContent = stats.total_transactions;
+        document.getElementById('total-payments').textContent = formatRupees(stats.total_payment_amount_rupees);
+        document.getElementById('total-cashback').textContent = formatRupees(stats.total_cashback_distributed_rupees);
+
+        // Tier distribution breakdown
+        const totalStu = stats.total_students || 1;
+        const tiers = stats.tier_distribution || {};
+        const basicCount = tiers.BASIC || 0;
+        const primeCount = tiers.PRIME || 0;
+        const premCount = tiers.PREMIUM || 0;
+
+        document.getElementById('tier-breakdown-list').innerHTML = `
+          <div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.3rem;">
+              <span><strong>BASIC (1x)</strong></span>
+              <span>${basicCount} (${Math.round(basicCount/totalStu*100)}%)</span>
+            </div>
+            <div style="background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden;">
+              <div style="background: #64748b; height: 100%; width: ${Math.round(basicCount/totalStu*100)}%;"></div>
+            </div>
+          </div>
+
+          <div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.3rem;">
+              <span><strong>PRIME (1.5x)</strong></span>
+              <span>${primeCount} (${Math.round(primeCount/totalStu*100)}%)</span>
+            </div>
+            <div style="background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden;">
+              <div style="background: var(--secondary); height: 100%; width: ${Math.round(primeCount/totalStu*100)}%;"></div>
+            </div>
+          </div>
+
+          <div>
+            <div style="display: flex; justify-content: space-between; font-size: 0.9rem; margin-bottom: 0.3rem;">
+              <span><strong>PREMIUM (2x)</strong></span>
+              <span>${premCount} (${Math.round(premCount/totalStu*100)}%)</span>
+            </div>
+            <div style="background: #e2e8f0; height: 8px; border-radius: 4px; overflow: hidden;">
+              <div style="background: #d97706; height: 100%; width: ${Math.round(premCount/totalStu*100)}%;"></div>
+            </div>
+          </div>
+        `;
+
+        // Recent transactions
+        const txs = await apiFetch('/api/admin/transactions');
+        const tbody = document.getElementById('recent-admin-tx-tbody');
+        if (txs.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: var(--text-muted);">No transactions recorded in system.</td></tr>';
+        } else {
+          tbody.innerHTML = txs.slice(0, 7).map(t => `
+            <tr>
+              <td>${formatDate(t.created_at)}</td>
+              <td><strong>${t.user_name}</strong></td>
+              <td>${t.merchant_name}</td>
+              <td style="font-weight: 600;">₹${t.amount_rupees.toFixed(2)}</td>
+              <td style="color: var(--accent); font-weight: 600;">${t.cashback_rupees > 0 ? '+₹' + t.cashback_rupees.toFixed(2) : '-'}</td>
+              <td>${renderStatusBadge(t.status)}</td>
+            </tr>
+          `).join('');
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>

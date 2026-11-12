@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Dashboard – TalentHub</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <div id="spinner" class="spinner-overlay"><div class="spinner"></div></div>
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-logo"><h2><i class="fas fa-graduation-cap"></i> TalentHub</h2><span>Student Portal</span></div>
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Main</div>
+        <a href="dashboard.html" class="nav-link active"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="profile.html" class="nav-link"><i class="fas fa-user"></i> My Profile</a>
+        <div class="nav-section-label">Placement</div>
+        <a href="jobs.html" class="nav-link"><i class="fas fa-briefcase"></i> Browse Jobs</a>
+        <a href="applications.html" class="nav-link"><i class="fas fa-file-alt"></i> Applications</a>
+        <a href="interviews.html" class="nav-link"><i class="fas fa-calendar-check"></i> Interviews</a>
+        <a href="offers.html" class="nav-link"><i class="fas fa-file-contract"></i> Offers</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <div class="user-avatar" id="sidebar-avatar">S</div>
+          <div><div class="user-name" id="sidebar-user-name">Student</div><div class="user-role" id="sidebar-user-role">Student</div></div>
+        </div>
+        <button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+      </div>
+    </aside>
+    <!-- Main -->
+    <main class="main-content">
+      <div class="top-bar">
+        <h1 id="greeting">Good Morning! 👋</h1>
+        <div class="top-bar-actions">
+          <a href="jobs.html" class="btn btn-accent btn-sm"><i class="fas fa-search"></i> Browse Jobs</a>
+          <a href="profile.html" class="btn btn-outline btn-sm"><i class="fas fa-user-edit"></i> Edit Profile</a>
+        </div>
+      </div>
+      <div class="page-content">
+        <!-- Profile incomplete warning -->
+        <div id="incomplete-warning" class="alert alert-warning" style="display:none">
+          <i class="fas fa-exclamation-triangle"></i>
+          Your profile is incomplete. <a href="profile.html" style="font-weight:700;">Complete it now</a> to start applying for jobs.
+        </div>
+        <!-- Placed banner -->
+        <div id="placed-banner" class="alert alert-success" style="display:none">
+          <i class="fas fa-trophy"></i> Congratulations! You are <strong>placed</strong>. Best wishes for your career! 🎉
+        </div>
+        <!-- Stats -->
+        <div class="stats-grid" id="stats-grid">
+          <div class="stat-card"><div class="stat-icon blue"><i class="fas fa-file-alt"></i></div><div class="stat-info"><h3 id="stat-applications">-</h3><p>Total Applications</p></div></div>
+          <div class="stat-card"><div class="stat-icon orange"><i class="fas fa-calendar-check"></i></div><div class="stat-info"><h3 id="stat-interviews">-</h3><p>Upcoming Interviews</p></div></div>
+          <div class="stat-card"><div class="stat-icon purple"><i class="fas fa-file-contract"></i></div><div class="stat-info"><h3 id="stat-offers">-</h3><p>Offers Received</p></div></div>
+          <div class="stat-card"><div class="stat-icon green"><i class="fas fa-check-double"></i></div><div class="stat-info"><h3 id="stat-accepted">-</h3><p>Offers Accepted</p></div></div>
+        </div>
+        <div style="display:grid; grid-template-columns: 1fr 1fr; gap:24px;">
+          <!-- Upcoming Interviews -->
+          <div class="card">
+            <h3 style="margin-bottom:16px; color:var(--primary);"><i class="fas fa-calendar"></i> Upcoming Interviews</h3>
+            <div id="interviews-list"><p style="color:var(--text-muted);">No upcoming interviews.</p></div>
+          </div>
+          <!-- Recent Offers -->
+          <div class="card">
+            <h3 style="margin-bottom:16px; color:var(--primary);"><i class="fas fa-envelope-open-text"></i> Recent Offers</h3>
+            <div id="offers-list"><p style="color:var(--text-muted);">No offers yet.</p></div>
+          </div>
+        </div>
+        <!-- Application Status -->
+        <div class="card" style="margin-top:24px;">
+          <h3 style="margin-bottom:16px; color:var(--primary);"><i class="fas fa-chart-pie"></i> Application Status Breakdown</h3>
+          <div id="status-breakdown" style="display:flex; flex-wrap:wrap; gap:12px;"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="../js/api.js"></script>
+  <script>
+    requireAuth('student');
+    renderSidebarUser();
+    const user = getUser();
+    document.getElementById('greeting').textContent = `Good ${new Date().getHours() < 12 ? 'Morning' : new Date().getHours() < 18 ? 'Afternoon' : 'Evening'}, ${user.name.split(' ')[0]}! 👋`;
+
+    (async () => {
+      showLoading();
+      try {
+        const { data } = await api('/dashboard/student');
+        document.getElementById('stat-applications').textContent = data.stats.totalApplications;
+        document.getElementById('stat-interviews').textContent = data.stats.upcomingInterviews;
+        document.getElementById('stat-offers').textContent = data.stats.offersReceived;
+        document.getElementById('stat-accepted').textContent = data.stats.offersAccepted;
+
+        if (!data.student.profileComplete) document.getElementById('incomplete-warning').style.display = 'flex';
+        if (data.student.isPlaced) document.getElementById('placed-banner').style.display = 'flex';
+
+        // Interviews
+        const intEl = document.getElementById('interviews-list');
+        if (data.upcomingInterviews.length > 0) {
+          intEl.innerHTML = data.upcomingInterviews.map(i => `
+            <div style="padding:12px 0; border-bottom:1px solid var(--border);">
+              <div style="font-weight:600;">${i.job?.title || 'Interview'}</div>
+              <div style="font-size:0.8rem; color:var(--text-muted);">${i.job?.company?.companyName || ''} · ${i.interviewType} · Round ${i.round}</div>
+              <div style="font-size:0.8rem; color:var(--accent); margin-top:4px;"><i class="fas fa-clock"></i> ${formatDateTime(i.interviewDate)}</div>
+            </div>`).join('');
+        }
+
+        // Offers
+        const offEl = document.getElementById('offers-list');
+        if (data.recentOffers.length > 0) {
+          offEl.innerHTML = data.recentOffers.map(o => `
+            <div style="padding:12px 0; border-bottom:1px solid var(--border);">
+              <div style="font-weight:600;">${o.designation || o.job?.title || 'Offer'}</div>
+              <div style="font-size:0.8rem; color:var(--text-muted);">${o.company?.companyName || ''}</div>
+              <div style="display:flex; gap:8px; align-items:center; margin-top:6px;">
+                <span style="font-weight:700; color:var(--success);">${formatCTC(o.ctc)}</span>
+                ${statusBadge(o.status)}
+              </div>
+            </div>`).join('');
+        }
+
+        // Status breakdown
+        const sbEl = document.getElementById('status-breakdown');
+        if (Object.keys(data.statusCount).length > 0) {
+          sbEl.innerHTML = Object.entries(data.statusCount).map(([status, count]) =>
+            `<div style="display:flex; align-items:center; gap:8px; padding:8px 14px; background:var(--bg); border-radius:8px;">
+               ${statusBadge(status)} <span style="font-weight:700;">${count}</span>
+             </div>`).join('');
+        } else { sbEl.innerHTML = '<p style="color:var(--text-muted);">No applications yet. <a href="jobs.html">Browse jobs</a>.</p>'; }
+      } catch(err) { showToast(err.message, 'error'); }
+      hideLoading();
+    })();
+  </script>
+</body>
+</html>

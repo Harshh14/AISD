@@ -1,0 +1,163 @@
+/* =========================================
+   TalentHub – Landing Page Styles
+   ========================================= */
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'Segoe UI', system-ui, sans-serif; color: #2c3e50; }
+a { text-decoration: none; color: inherit; }
+
+/* Navbar */
+.navbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+  padding: 16px 60px;
+  display: flex; align-items: center; justify-content: space-between;
+  background: transparent; transition: all 0.3s;
+}
+.navbar.scrolled { background: rgba(30,58,95,0.97); backdrop-filter: blur(10px); box-shadow: 0 2px 20px rgba(0,0,0,0.3); }
+.nav-logo { font-size: 1.5rem; font-weight: 800; color: #fff; }
+.nav-logo span { color: #3498db; }
+.nav-links { display: flex; gap: 32px; }
+.nav-links a { color: rgba(255,255,255,0.85); font-weight: 500; font-size: 0.9rem; transition: color 0.3s; }
+.nav-links a:hover { color: #fff; }
+.nav-actions { display: flex; gap: 12px; }
+.btn-nav {
+  padding: 9px 22px; border-radius: 8px; font-size: 0.875rem;
+  font-weight: 600; cursor: pointer; transition: all 0.3s;
+}
+.btn-login { background: rgba(255,255,255,0.1); color: #fff; border: 1px solid rgba(255,255,255,0.3); }
+.btn-login:hover { background: rgba(255,255,255,0.2); }
+.btn-register { background: #3498db; color: #fff; border: none; }
+.btn-register:hover { background: #2980b9; }
+
+/* Hero */
+.hero {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8e 50%, #3498db 100%);
+  display: flex; align-items: center; justify-content: center;
+  text-align: center; padding: 80px 24px 60px; position: relative; overflow: hidden;
+}
+.hero::before {
+  content: '';
+  position: absolute; inset: 0;
+  background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.03'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+}
+.hero-content { position: relative; z-index: 1; max-width: 700px; }
+.hero-badge {
+  display: inline-block; padding: 6px 18px; border-radius: 20px;
+  background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.9);
+  font-size: 0.8rem; font-weight: 600; letter-spacing: 0.5px; margin-bottom: 20px;
+}
+.hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900; color: #fff; line-height: 1.2; margin-bottom: 20px; }
+.hero h1 span { color: #74b9ff; }
+.hero p { font-size: 1.1rem; color: rgba(255,255,255,0.8); max-width: 540px; margin: 0 auto 36px; line-height: 1.7; }
+.hero-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+.btn-hero-primary {
+  padding: 15px 36px; border-radius: 10px; font-size: 1rem; font-weight: 700;
+  background: #fff; color: #1e3a5f; border: none; cursor: pointer; transition: all 0.3s;
+}
+.btn-hero-primary:hover { transform: translateY(-3px); box-shadow: 0 10px 30px rgba(0,0,0,0.3); }
+.btn-hero-outline {
+  padding: 15px 36px; border-radius: 10px; font-size: 1rem; font-weight: 700;
+  background: transparent; color: #fff; border: 2px solid rgba(255,255,255,0.5); cursor: pointer; transition: all 0.3s;
+}
+.btn-hero-outline:hover { background: rgba(255,255,255,0.1); border-color: #fff; }
+
+/* Stats strip */
+.stats-strip {
+  background: #fff; padding: 32px 60px;
+  display: flex; justify-content: space-around; flex-wrap: wrap; gap: 24px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+.stat-item { text-align: center; }
+.stat-item .number { font-size: 2rem; font-weight: 800; color: #1e3a5f; }
+.stat-item .label { font-size: 0.82rem; color: #7f8c8d; font-weight: 500; margin-top: 2px; }
+
+/* Features */
+.features { padding: 80px 60px; background: #f0f4f8; }
+.section-header { text-align: center; margin-bottom: 56px; }
+.section-header h2 { font-size: 2rem; font-weight: 800; color: #1e3a5f; margin-bottom: 12px; }
+.section-header p { color: #7f8c8d; font-size: 1rem; max-width: 500px; margin: 0 auto; }
+
+.features-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 24px; }
+.feature-card {
+  background: #fff; border-radius: 16px; padding: 32px;
+  box-shadow: 0 2px 15px rgba(0,0,0,0.06); transition: all 0.3s;
+}
+.feature-card:hover { transform: translateY(-6px); box-shadow: 0 12px 35px rgba(0,0,0,0.12); }
+.feature-icon {
+  width: 56px; height: 56px; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1.5rem; margin-bottom: 20px;
+}
+.feature-icon.blue   { background: rgba(52,152,219,0.1); color: #3498db; }
+.feature-icon.green  { background: rgba(39,174,96,0.1);  color: #27ae60; }
+.feature-icon.orange { background: rgba(243,156,18,0.1); color: #f39c12; }
+.feature-icon.purple { background: rgba(155,89,182,0.1); color: #9b59b6; }
+.feature-icon.red    { background: rgba(231,76,60,0.1);  color: #e74c3c; }
+.feature-icon.navy   { background: rgba(30,58,95,0.1);   color: #1e3a5f; }
+.feature-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; color: #2c3e50; }
+.feature-card p { font-size: 0.875rem; color: #7f8c8d; line-height: 1.6; }
+
+/* Workflow */
+.workflow { padding: 80px 60px; background: #fff; }
+.workflow-steps { display: flex; flex-wrap: wrap; gap: 0; justify-content: center; }
+.workflow-step { flex: 1; min-width: 140px; max-width: 180px; text-align: center; padding: 20px 10px; position: relative; }
+.workflow-step:not(:last-child)::after {
+  content: '→'; position: absolute; right: -8px; top: 32px;
+  font-size: 1.2rem; color: #3498db; font-weight: 700;
+}
+.step-num {
+  width: 48px; height: 48px; border-radius: 50%;
+  background: linear-gradient(135deg, #1e3a5f, #3498db);
+  color: #fff; font-size: 1.1rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;
+}
+.workflow-step p { font-size: 0.8rem; color: #7f8c8d; font-weight: 500; }
+
+/* Roles section */
+.roles-section { padding: 80px 60px; background: #f0f4f8; }
+.roles-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; }
+.role-card {
+  background: #fff; border-radius: 16px; padding: 36px 28px;
+  box-shadow: 0 2px 15px rgba(0,0,0,0.06); text-align: center;
+  border-top: 4px solid transparent; transition: all 0.3s;
+}
+.role-card.student { border-top-color: #3498db; }
+.role-card.company { border-top-color: #27ae60; }
+.role-card.admin   { border-top-color: #9b59b6; }
+.role-card:hover { transform: translateY(-5px); box-shadow: 0 12px 35px rgba(0,0,0,0.12); }
+.role-icon { font-size: 2.8rem; margin-bottom: 16px; }
+.role-card h3 { font-size: 1.2rem; font-weight: 700; margin-bottom: 12px; }
+.role-card ul { text-align: left; margin-bottom: 24px; }
+.role-card ul li { font-size: 0.82rem; color: #7f8c8d; padding: 4px 0; display: flex; align-items: center; gap: 8px; }
+.role-card ul li::before { content: '✓'; color: #27ae60; font-weight: 700; }
+.btn-role {
+  padding: 10px 24px; border-radius: 8px; font-size: 0.875rem; font-weight: 700;
+  cursor: pointer; border: none; transition: all 0.3s; display: inline-block;
+}
+.role-card.student .btn-role { background: rgba(52,152,219,0.1); color: #3498db; }
+.role-card.company .btn-role { background: rgba(39,174,96,0.1); color: #27ae60; }
+.role-card.admin   .btn-role { background: rgba(155,89,182,0.1); color: #9b59b6; }
+
+/* CTA */
+.cta-section {
+  padding: 80px 60px; text-align: center;
+  background: linear-gradient(135deg, #1e3a5f, #2d5a8e);
+}
+.cta-section h2 { font-size: 2rem; font-weight: 800; color: #fff; margin-bottom: 16px; }
+.cta-section p { color: rgba(255,255,255,0.75); margin-bottom: 32px; font-size: 1.05rem; }
+.cta-actions { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+/* Footer */
+footer {
+  background: #0f1f33; color: rgba(255,255,255,0.6);
+  padding: 24px 60px; text-align: center; font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+  .navbar { padding: 14px 20px; }
+  .features, .workflow, .roles-section, .cta-section { padding: 50px 20px; }
+  .stats-strip { padding: 24px 20px; }
+  .roles-grid { grid-template-columns: 1fr; }
+  .nav-links { display: none; }
+}

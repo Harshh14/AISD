@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Profile – FinPay</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span>FinPay</span>
+        <span class="brand-badge">Student</span>
+      </div>
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.html">&#128202; Dashboard</a></li>
+        <li><a href="wallet.html">&#128176; My Wallet</a></li>
+        <li><a href="pay.html">&#128184; Pay Merchant</a></li>
+        <li><a href="transactions.html">&#128220; History</a></li>
+        <li><a href="cashback.html">&#127873; Cashback & Tiers</a></li>
+        <li><a href="profile.html" class="active">&#128100; Profile</a></li>
+        <li><a href="#" onclick="logout(); return false;">&#128682; Logout</a></li>
+      </ul>
+      <div class="sidebar-user">
+        <div class="user-name" id="user-display-name">Loading...</div>
+        <div class="user-role-tier" id="user-display-role">Student</div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">Student Profile</h1>
+          <p class="page-subtitle">Your registered account and campus digital wallet details</p>
+        </div>
+      </div>
+
+      <div style="max-width: 700px;">
+        <div class="card">
+          <div style="display: flex; align-items: center; gap: 1.5rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem;">
+            <div style="width: 70px; height: 70px; border-radius: 50%; background: var(--primary); color: #ffffff; display: flex; align-items: center; justify-content: center; font-size: 2rem; font-weight: 700;">
+              <span id="avatar-initials">S</span>
+            </div>
+            <div>
+              <h2 style="font-size: 1.4rem; color: var(--primary);" id="profile-name">Student Name</h2>
+              <div style="color: var(--text-muted); font-size: 0.9rem;" id="profile-email">email@student.edu</div>
+              <div style="margin-top: 0.4rem;" id="profile-tier-badge"></div>
+            </div>
+          </div>
+
+          <div style="display: flex; flex-direction: column; gap: 1rem; font-size: 0.95rem;">
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
+              <span style="color: var(--text-muted);">Account ID:</span>
+              <strong id="profile-id">-</strong>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
+              <span style="color: var(--text-muted);">Role:</span>
+              <span class="badge badge-info">STUDENT</span>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
+              <span style="color: var(--text-muted);">Membership Tier:</span>
+              <strong id="profile-tier">-</strong>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
+              <span style="color: var(--text-muted);">Current Wallet Balance:</span>
+              <strong style="color: var(--primary);" id="profile-balance">-</strong>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border); padding-bottom: 0.75rem;">
+              <span style="color: var(--text-muted);">Member Since:</span>
+              <span id="profile-created">-</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    if (requireAuth(['student'])) {
+      initSidebarUser();
+      loadProfile();
+    }
+
+    async function loadProfile() {
+      try {
+        const me = await apiFetch('/api/auth/me');
+        const wallet = await apiFetch('/api/wallet');
+
+        document.getElementById('profile-name').textContent = me.name;
+        document.getElementById('profile-email').textContent = me.email;
+        document.getElementById('profile-id').textContent = `#STU-${me.id}`;
+        document.getElementById('profile-tier').textContent = me.membership_tier;
+        document.getElementById('profile-tier-badge').innerHTML = renderTierBadge(me.membership_tier);
+        document.getElementById('avatar-initials').textContent = me.name.charAt(0).toUpperCase();
+        document.getElementById('profile-balance').textContent = formatRupees(wallet.balance_rupees);
+        document.getElementById('profile-created').textContent = formatDate(me.created_at);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>

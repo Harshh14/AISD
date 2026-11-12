@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Applicants – TalentHub</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <div id="spinner" class="spinner-overlay"><div class="spinner"></div></div>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><h2><i class="fas fa-building"></i> TalentHub</h2><span>Company Portal</span></div>
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Main</div>
+        <a href="dashboard.html" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+        <div class="nav-section-label">Recruitment</div>
+        <a href="jobs.html" class="nav-link"><i class="fas fa-briefcase"></i> Job Listings</a>
+        <a href="applicants.html" class="nav-link active"><i class="fas fa-users"></i> Applicants</a>
+        <a href="interviews.html" class="nav-link"><i class="fas fa-calendar-check"></i> Interviews</a>
+        <a href="offers.html" class="nav-link"><i class="fas fa-file-contract"></i> Offers</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-info"><div class="user-avatar" id="sidebar-avatar">C</div><div><div class="user-name" id="sidebar-user-name">Company</div><div class="user-role" id="sidebar-user-role">Company</div></div></div>
+        <button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+      </div>
+    </aside>
+    <main class="main-content">
+      <div class="top-bar"><h1>Applicants</h1></div>
+      <div class="page-content">
+        <div class="toolbar">
+          <div class="search-box"><i class="fas fa-search"></i><input type="text" id="search" placeholder="Search by name, branch..."></div>
+          <select id="filter-job" class="form-control" style="width:220px;"><option value="">All Jobs</option></select>
+          <select id="filter-status" class="form-control" style="width:170px;">
+            <option value="">All Statuses</option>
+            <option>Applied</option><option>Under Review</option><option>Shortlisted</option>
+            <option>Interview Scheduled</option><option>Selected</option><option>Rejected</option>
+          </select>
+        </div>
+        <div class="card">
+          <div class="table-container">
+            <table id="apps-table">
+              <thead><tr><th>Student</th><th>Branch</th><th>CGPA</th><th>Backlogs</th><th>Job</th><th>Applied</th><th>Eligible</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="apps-body"><tr><td colspan="9" style="text-align:center;color:var(--text-muted);">Select a job or load all</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Status Update Modal -->
+  <div class="modal-overlay" id="statusModal">
+    <div class="modal" style="max-width:420px;">
+      <div class="modal-header"><h3><i class="fas fa-edit"></i> Update Status</h3><button class="modal-close" onclick="closeModal('statusModal')">&times;</button></div>
+      <p id="status-student-name" style="font-weight:600;margin-bottom:12px;"></p>
+      <div class="form-group"><label>New Status</label>
+        <select id="new-status" class="form-control">
+          <option>Applied</option><option>Under Review</option><option>Shortlisted</option>
+          <option>Interview Scheduled</option><option>Selected</option><option>Rejected</option><option>Withdrawn</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Notes (optional)</label><textarea id="company-notes" class="form-control" rows="2" placeholder="Internal notes..."></textarea></div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('statusModal')">Cancel</button>
+        <button class="btn btn-primary" id="update-status-btn"><i class="fas fa-save"></i> Update</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    requireAuth('company'); renderSidebarUser();
+    let allApps = [], selectedAppId = null;
+
+    const renderApps = (apps) => {
+      const body = document.getElementById('apps-body');
+      if (!apps.length) { body.innerHTML = '<tr><td colspan="9" style="text-align:center;color:var(--text-muted);">No applicants found.</td></tr>'; return; }
+      body.innerHTML = apps.map(a => `<tr>
+        <td><strong>${a.student?.user?.name||'—'}</strong><br><small style="color:var(--text-muted);">${a.student?.user?.email||''}</small></td>
+        <td>${a.student?.branch||'—'}</td>
+        <td>${a.student?.cgpa??'—'}</td>
+        <td>${a.student?.activeBacklogs??'—'}</td>
+        <td>${a.job?.title||'—'}</td>
+        <td>${formatDate(a.createdAt)}</td>
+        <td>${a.isEligible ? '<span class="badge badge-success">✓ Yes</span>' : '<span class="badge badge-danger">✗ No</span>'}</td>
+        <td>${statusBadge(a.status)}</td>
+        <td><button class="btn btn-sm btn-outline" onclick="openStatus(${a.id},'${(a.student?.user?.name||'').replace(/'/g,"\\'")}','${a.status}')"><i class="fas fa-edit"></i> Update</button></td>
+      </tr>`).join('');
+    };
+
+    const filterApps = () => {
+      const q = document.getElementById('search').value.toLowerCase();
+      const job = document.getElementById('filter-job').value;
+      const status = document.getElementById('filter-status').value;
+      renderApps(allApps.filter(a =>
+        (!q || (a.student?.user?.name||'').toLowerCase().includes(q) || (a.student?.branch||'').toLowerCase().includes(q)) &&
+        (!job || String(a.jobId) === job) &&
+        (!status || a.status === status)
+      ));
+    };
+
+    const loadApps = async () => {
+      showLoading();
+      try {
+        // Load all jobs first to populate filter
+        const jobsRes = await api('/jobs/my');
+        const jobFilter = document.getElementById('filter-job');
+        jobsRes.data.forEach(j => { const o = document.createElement('option'); o.value = j.id; o.textContent = j.title; jobFilter.appendChild(o); });
+
+        // Check URL param
+        const urlJobId = new URLSearchParams(window.location.search).get('jobId');
+        if (urlJobId) { jobFilter.value = urlJobId; }
+
+        // Load apps for each job
+        const apps = [];
+        for (const j of jobsRes.data) {
+          try {
+            const r = await api(`/applications/job/${j.id}`);
+            apps.push(...r.data);
+          } catch {}
+        }
+        allApps = apps;
+        filterApps();
+      } catch(e) { showToast(e.message,'error'); }
+      hideLoading();
+    };
+
+    loadApps();
+    document.getElementById('search').addEventListener('input', filterApps);
+    document.getElementById('filter-job').addEventListener('change', filterApps);
+    document.getElementById('filter-status').addEventListener('change', filterApps);
+
+    const openStatus = (id, name, currentStatus) => {
+      selectedAppId = id;
+      document.getElementById('status-student-name').textContent = `Student: ${name}`;
+      document.getElementById('new-status').value = currentStatus;
+      document.getElementById('company-notes').value = '';
+      openModal('statusModal');
+    };
+
+    document.getElementById('update-status-btn').addEventListener('click', async () => {
+      try {
+        await api(`/applications/${selectedAppId}/status`, { method:'PUT', body: JSON.stringify({ status: document.getElementById('new-status').value, companyNotes: document.getElementById('company-notes').value }) });
+        closeModal('statusModal'); showToast('Application status updated!'); loadApps();
+      } catch(err) { showToast(err.message,'error'); }
+    });
+  </script>
+</body>
+</html>

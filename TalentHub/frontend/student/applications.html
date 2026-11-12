@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>My Applications – TalentHub</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <div id="spinner" class="spinner-overlay"><div class="spinner"></div></div>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><h2><i class="fas fa-graduation-cap"></i> TalentHub</h2><span>Student Portal</span></div>
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Main</div>
+        <a href="dashboard.html" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+        <a href="profile.html" class="nav-link"><i class="fas fa-user"></i> My Profile</a>
+        <div class="nav-section-label">Placement</div>
+        <a href="jobs.html" class="nav-link"><i class="fas fa-briefcase"></i> Browse Jobs</a>
+        <a href="applications.html" class="nav-link active"><i class="fas fa-file-alt"></i> Applications</a>
+        <a href="interviews.html" class="nav-link"><i class="fas fa-calendar-check"></i> Interviews</a>
+        <a href="offers.html" class="nav-link"><i class="fas fa-file-contract"></i> Offers</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-info"><div class="user-avatar" id="sidebar-avatar">S</div><div><div class="user-name" id="sidebar-user-name">Student</div><div class="user-role" id="sidebar-user-role">Student</div></div></div>
+        <button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+      </div>
+    </aside>
+    <main class="main-content">
+      <div class="top-bar"><h1>My Applications</h1></div>
+      <div class="page-content">
+        <div class="toolbar">
+          <div class="search-box"><i class="fas fa-search"></i><input type="text" id="search" placeholder="Search applications..."></div>
+          <select id="filter-status" class="form-control" style="width:200px;">
+            <option value="">All Statuses</option>
+            <option>Applied</option><option>Under Review</option><option>Shortlisted</option>
+            <option>Interview Scheduled</option><option>Selected</option><option>Rejected</option>
+            <option>Offer Issued</option><option>Offer Accepted</option>
+          </select>
+        </div>
+        <div class="card">
+          <div class="table-container">
+            <table id="apps-table">
+              <thead><tr><th>Company</th><th>Job Title</th><th>Applied On</th><th>Status</th><th>Actions</th></tr></thead>
+              <tbody id="apps-body"><tr><td colspan="5" style="text-align:center; color:var(--text-muted);">Loading...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+  <script src="../js/api.js"></script>
+  <script>
+    requireAuth('student');
+    renderSidebarUser();
+    let allApps = [];
+
+    const renderApps = (apps) => {
+      const body = document.getElementById('apps-body');
+      if (!apps.length) { body.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted);">No applications yet. <a href="jobs.html">Browse jobs</a>.</td></tr>'; return; }
+      body.innerHTML = apps.map(app => `
+        <tr>
+          <td><strong>${app.job?.company?.companyName || '—'}</strong></td>
+          <td>${app.job?.title || '—'}<br><small style="color:var(--text-muted);">${app.job?.jobType || ''} · ${app.job?.location || ''}</small></td>
+          <td>${formatDate(app.appliedAt || app.createdAt)}</td>
+          <td>${statusBadge(app.status)}</td>
+          <td>
+            ${app.interviews?.length ? `<span style="font-size:0.8rem; color:var(--info);">${app.interviews.length} interview(s)</span>` : ''}
+            ${app.offer ? `<a href="offers.html" class="btn btn-sm btn-success"><i class="fas fa-eye"></i> View Offer</a>` : ''}
+          </td>
+        </tr>`).join('');
+    };
+
+    const filterApps = () => {
+      const q = document.getElementById('search').value.toLowerCase();
+      const status = document.getElementById('filter-status').value;
+      const filtered = allApps.filter(a =>
+        (!q || (a.job?.title || '').toLowerCase().includes(q) || (a.job?.company?.companyName || '').toLowerCase().includes(q)) &&
+        (!status || a.status === status));
+      renderApps(filtered);
+    };
+
+    (async () => {
+      showLoading();
+      try { const { data } = await api('/applications/me'); allApps = data; filterApps(); } catch(e) { showToast(e.message,'error'); }
+      hideLoading();
+    })();
+
+    document.getElementById('search').addEventListener('input', filterApps);
+    document.getElementById('filter-status').addEventListener('change', filterApps);
+  </script>
+</body>
+</html>

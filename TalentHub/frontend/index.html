@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TalentHub – Campus Placement Management System</title>
+  <link rel="stylesheet" href="css/landing.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <!-- Navbar -->
+  <nav class="navbar" id="navbar">
+    <div class="nav-logo">Talent<span>Hub</span></div>
+    <div class="nav-links">
+      <a href="#features">Features</a>
+      <a href="#workflow">How it Works</a>
+      <a href="#roles">For You</a>
+    </div>
+    <div class="nav-actions">
+      <a href="login.html" class="btn-nav btn-login">Login</a>
+      <a href="register.html" class="btn-nav btn-register">Get Started</a>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <section class="hero">
+    <div class="hero-content">
+      <div class="hero-badge">🎓 Campus Placement Management System</div>
+      <h1>Streamline Your <span>Campus Placements</span> End-to-End</h1>
+      <p>TalentHub connects students, companies, and administrators on one platform — from job posting and eligibility checks to interviews, offers, and placement analytics.</p>
+      <div class="hero-actions">
+        <a href="register.html" class="btn-hero-primary"><i class="fas fa-rocket"></i> Get Started Free</a>
+        <a href="#features" class="btn-hero-outline"><i class="fas fa-play-circle"></i> See Features</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats -->
+  <div class="stats-strip">
+    <div class="stat-item"><div class="number">500+</div><div class="label">Students Placed</div></div>
+    <div class="stat-item"><div class="number">120+</div><div class="label">Partner Companies</div></div>
+    <div class="stat-item"><div class="number">95%</div><div class="label">Placement Rate</div></div>
+    <div class="stat-item"><div class="number">₹8.5L</div><div class="label">Average CTC</div></div>
+    <div class="stat-item"><div class="number">1000+</div><div class="label">Job Applications</div></div>
+  </div>
+
+  <!-- Features -->
+  <section class="features" id="features">
+    <div class="section-header">
+      <h2>Everything You Need</h2>
+      <p>A complete placement ecosystem built for modern campus recruitment</p>
+    </div>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon blue"><i class="fas fa-check-circle"></i></div>
+        <h3>Smart Eligibility Check</h3>
+        <p>Automatic CGPA, backlog, and branch-based eligibility verification. Students only see jobs they can apply for.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon green"><i class="fas fa-briefcase"></i></div>
+        <h3>Job Listings</h3>
+        <p>Companies post detailed job listings with salary ranges, requirements, and openings. Students browse and apply with one click.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon orange"><i class="fas fa-calendar-check"></i></div>
+        <h3>Interview Scheduling</h3>
+        <p>Schedule online/offline interviews with rounds, meeting links, instructions, and real-time status updates.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon purple"><i class="fas fa-file-contract"></i></div>
+        <h3>Offer Management</h3>
+        <p>Issue digital offer letters with CTC details. Students can accept or decline offers and get placed status automatically.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon red"><i class="fas fa-chart-line"></i></div>
+        <h3>Placement Analytics</h3>
+        <p>Admin dashboards with real-time placement statistics, branch-wise reports, CTC analysis, and trend tracking.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon navy"><i class="fas fa-shield-alt"></i></div>
+        <h3>Role-Based Access</h3>
+        <p>Secure JWT authentication with separate portals for students, companies, and administrators. Data is always protected.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Workflow -->
+  <section class="workflow" id="workflow">
+    <div class="section-header">
+      <h2>How It Works</h2>
+      <p>Simple 7-step placement journey from registration to offer</p>
+    </div>
+    <div class="workflow-steps">
+      <div class="workflow-step"><div class="step-num">1</div><p>Register &amp; Login</p></div>
+      <div class="workflow-step"><div class="step-num">2</div><p>Complete Profile</p></div>
+      <div class="workflow-step"><div class="step-num">3</div><p>Browse Jobs</p></div>
+      <div class="workflow-step"><div class="step-num">4</div><p>Apply (Eligibility Check)</p></div>
+      <div class="workflow-step"><div class="step-num">5</div><p>Interview Round</p></div>
+      <div class="workflow-step"><div class="step-num">6</div><p>Receive Offer</p></div>
+      <div class="workflow-step"><div class="step-num">7</div><p>Accept &amp; Get Placed! 🎉</p></div>
+    </div>
+  </section>
+
+  <!-- Roles -->
+  <section class="roles-section" id="roles">
+    <div class="section-header">
+      <h2>Built For Everyone</h2>
+      <p>Three dedicated portals, each tailored to your role</p>
+    </div>
+    <div class="roles-grid">
+      <div class="role-card student">
+        <div class="role-icon">🎓</div>
+        <h3>Students</h3>
+        <ul>
+          <li>Browse eligible jobs automatically</li>
+          <li>Apply with cover letter</li>
+          <li>Track application status</li>
+          <li>View interview schedule</li>
+          <li>Accept or decline offers</li>
+        </ul>
+        <a href="register.html?role=student" class="btn-role">Join as Student</a>
+      </div>
+      <div class="role-card company">
+        <div class="role-icon">🏢</div>
+        <h3>Companies</h3>
+        <ul>
+          <li>Post job listings with criteria</li>
+          <li>Review and shortlist applicants</li>
+          <li>Schedule interviews by round</li>
+          <li>Record interview results</li>
+          <li>Issue offer letters</li>
+        </ul>
+        <a href="register.html?role=company" class="btn-role">Partner With Us</a>
+      </div>
+      <div class="role-card admin">
+        <div class="role-icon">⚙️</div>
+        <h3>Administrators</h3>
+        <ul>
+          <li>Monitor all placements</li>
+          <li>View student & company data</li>
+          <li>Generate placement reports</li>
+          <li>Branch-wise statistics</li>
+          <li>CTC and offer analytics</li>
+        </ul>
+        <a href="login.html" class="btn-role">Admin Login</a>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section class="cta-section">
+    <h2>Ready to Simplify Campus Placements?</h2>
+    <p>Join TalentHub today and experience the future of campus recruitment.</p>
+    <div class="cta-actions">
+      <a href="register.html" class="btn-hero-primary"><i class="fas fa-user-plus"></i> Create Account</a>
+      <a href="login.html" class="btn-hero-outline"><i class="fas fa-sign-in-alt"></i> Sign In</a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <p>© 2025 TalentHub – Campus Placement Management System. Built with Node.js, Express &amp; SQLite.</p>
+  </footer>
+
+  <script>
+    window.addEventListener('scroll', () => {
+      document.getElementById('navbar').classList.toggle('scrolled', window.scrollY > 50);
+    });
+  </script>
+</body>
+</html>

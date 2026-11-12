@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Interviews – TalentHub</title>
+  <link rel="stylesheet" href="../css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+</head>
+<body>
+  <div id="spinner" class="spinner-overlay"><div class="spinner"></div></div>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-logo"><h2><i class="fas fa-building"></i> TalentHub</h2><span>Company Portal</span></div>
+      <nav class="sidebar-nav">
+        <div class="nav-section-label">Main</div>
+        <a href="dashboard.html" class="nav-link"><i class="fas fa-home"></i> Dashboard</a>
+        <div class="nav-section-label">Recruitment</div>
+        <a href="jobs.html" class="nav-link"><i class="fas fa-briefcase"></i> Job Listings</a>
+        <a href="applicants.html" class="nav-link"><i class="fas fa-users"></i> Applicants</a>
+        <a href="interviews.html" class="nav-link active"><i class="fas fa-calendar-check"></i> Interviews</a>
+        <a href="offers.html" class="nav-link"><i class="fas fa-file-contract"></i> Offers</a>
+      </nav>
+      <div class="sidebar-footer">
+        <div class="user-info"><div class="user-avatar" id="sidebar-avatar">C</div><div><div class="user-name" id="sidebar-user-name">Company</div><div class="user-role" id="sidebar-user-role">Company</div></div></div>
+        <button class="btn-logout" onclick="logout()"><i class="fas fa-sign-out-alt"></i> Sign Out</button>
+      </div>
+    </aside>
+    <main class="main-content">
+      <div class="top-bar">
+        <h1>Interview Management</h1>
+        <div class="top-bar-actions"><button class="btn btn-accent btn-sm" onclick="openScheduleModal()"><i class="fas fa-plus"></i> Schedule Interview</button></div>
+      </div>
+      <div class="page-content">
+        <div class="card">
+          <div class="toolbar" style="margin-bottom:16px;">
+            <div class="search-box"><i class="fas fa-search"></i><input type="text" id="search" placeholder="Search by student name..."></div>
+            <select id="filter-status" class="form-control" style="width:170px;">
+              <option value="">All Statuses</option><option>Scheduled</option><option>Completed</option><option>Cancelled</option>
+            </select>
+          </div>
+          <div class="table-container">
+            <table>
+              <thead><tr><th>Student</th><th>Job</th><th>Date &amp; Time</th><th>Type</th><th>Round</th><th>Status</th><th>Result</th><th>Actions</th></tr></thead>
+              <tbody id="int-body"><tr><td colspan="8" style="text-align:center;color:var(--text-muted);">Loading...</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Schedule Modal -->
+  <div class="modal-overlay" id="scheduleModal">
+    <div class="modal" style="max-width:580px;">
+      <div class="modal-header"><h3><i class="fas fa-calendar-plus"></i> Schedule Interview</h3><button class="modal-close" onclick="closeModal('scheduleModal')">&times;</button></div>
+      <div class="form-group"><label>Select Application (Shortlisted Student)</label>
+        <select id="app-select" class="form-control"><option value="">Loading applications...</option></select>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div class="form-group"><label>Interview Date &amp; Time</label><input type="datetime-local" id="int-date" class="form-control"></div>
+        <div class="form-group"><label>Interview Type</label>
+          <select id="int-type" class="form-control"><option>Online</option><option>Offline</option><option>Telephonic</option><option>Group Discussion</option><option>Technical</option><option>HR</option></select>
+        </div>
+        <div class="form-group"><label>Round Number</label><input type="number" id="int-round" class="form-control" value="1" min="1"></div>
+        <div class="form-group"><label>Venue (if Offline)</label><input type="text" id="int-venue" class="form-control" placeholder="Room 101, Block A"></div>
+      </div>
+      <div class="form-group"><label>Meeting Link (if Online)</label><input type="url" id="int-link" class="form-control" placeholder="https://meet.google.com/..."></div>
+      <div class="form-group"><label>Instructions for Student</label><textarea id="int-instructions" class="form-control" rows="2" placeholder="Bring your resume and ID proof..."></textarea></div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('scheduleModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="scheduleInterview()"><i class="fas fa-save"></i> Schedule</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Result Modal -->
+  <div class="modal-overlay" id="resultModal">
+    <div class="modal" style="max-width:420px;">
+      <div class="modal-header"><h3><i class="fas fa-clipboard-check"></i> Record Result</h3><button class="modal-close" onclick="closeModal('resultModal')">&times;</button></div>
+      <input type="hidden" id="edit-int-id">
+      <div class="form-group"><label>Status</label>
+        <select id="int-status" class="form-control"><option>Scheduled</option><option>Completed</option><option>Cancelled</option></select>
+      </div>
+      <div class="form-group"><label>Result</label>
+        <select id="int-result" class="form-control"><option>Pending</option><option>Passed</option><option>Failed</option><option>On Hold</option></select>
+      </div>
+      <div class="form-group"><label>Score (out of 100)</label><input type="number" id="int-score" class="form-control" min="0" max="100" placeholder="85"></div>
+      <div class="form-group"><label>Feedback</label><textarea id="int-feedback" class="form-control" rows="3" placeholder="Good technical skills..."></textarea></div>
+      <div class="modal-footer">
+        <button class="btn btn-outline" onclick="closeModal('resultModal')">Cancel</button>
+        <button class="btn btn-primary" onclick="saveResult()"><i class="fas fa-save"></i> Save Result</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script>
+    requireAuth('company'); renderSidebarUser();
+    let allInterviews = [];
+
+    const renderInterviews = (ints) => {
+      const body = document.getElementById('int-body');
+      if (!ints.length) { body.innerHTML = '<tr><td colspan="8" style="text-align:center;color:var(--text-muted);">No interviews found.</td></tr>'; return; }
+      body.innerHTML = ints.map(i => `<tr>
+        <td><strong>${i.student?.user?.name||'—'}</strong></td>
+        <td>${i.job?.title||'—'}</td>
+        <td>${formatDateTime(i.interviewDate)}</td>
+        <td>${i.interviewType}</td>
+        <td>Round ${i.round}</td>
+        <td>${statusBadge(i.status)}</td>
+        <td>${statusBadge(i.result)}</td>
+        <td><button class="btn btn-sm btn-outline" onclick="openResult(${i.id},'${i.status}','${i.result}',${i.score||'null'},'${(i.feedback||'').replace(/'/g,"\\'")}')"><i class="fas fa-edit"></i> Result</button></td>
+      </tr>`).join('');
+    };
+
+    const filterInterviews = () => {
+      const q = document.getElementById('search').value.toLowerCase();
+      const s = document.getElementById('filter-status').value;
+      renderInterviews(allInterviews.filter(i =>
+        (!q || (i.student?.user?.name||'').toLowerCase().includes(q)) &&
+        (!s || i.status === s)
+      ));
+    };
+
+    const loadInterviews = async () => {
+      showLoading();
+      try { const { data } = await api('/interviews/company'); allInterviews = data; filterInterviews(); } catch(e) { showToast(e.message,'error'); }
+      hideLoading();
+    };
+    loadInterviews();
+    document.getElementById('search').addEventListener('input', filterInterviews);
+    document.getElementById('filter-status').addEventListener('change', filterInterviews);
+
+    const openScheduleModal = async () => {
+      const sel = document.getElementById('app-select');
+      sel.innerHTML = '<option value="">Loading...</option>';
+      openModal('scheduleModal');
+      try {
+        const jobsRes = await api('/jobs/my');
+        const opts = ['<option value="">Select Application</option>'];
+        for (const j of jobsRes.data) {
+          try {
+            const r = await api(`/applications/job/${j.id}`);
+            r.data.filter(a => ['Shortlisted','Applied','Under Review'].includes(a.status)).forEach(a => {
+              opts.push(`<option value="${a.id}">${a.student?.user?.name||'Student'} → ${j.title}</option>`);
+            });
+          } catch {}
+        }
+        sel.innerHTML = opts.join('');
+      } catch(e) { showToast(e.message,'error'); }
+    };
+
+    const scheduleInterview = async () => {
+      const appId = document.getElementById('app-select').value;
+      if (!appId) { showToast('Please select an application', 'error'); return; }
+      try {
+        await api('/interviews', { method:'POST', body: JSON.stringify({
+          applicationId: parseInt(appId),
+          interviewDate: document.getElementById('int-date').value,
+          interviewType: document.getElementById('int-type').value,
+          round: parseInt(document.getElementById('int-round').value)||1,
+          venue: document.getElementById('int-venue').value,
+          meetingLink: document.getElementById('int-link').value,
+          instructions: document.getElementById('int-instructions').value,
+        })});
+        closeModal('scheduleModal'); showToast('Interview scheduled!'); loadInterviews();
+      } catch(err) { showToast(err.message,'error'); }
+    };
+
+    const openResult = (id, status, result, score, feedback) => {
+      document.getElementById('edit-int-id').value = id;
+      document.getElementById('int-status').value = status;
+      document.getElementById('int-result').value = result;
+      document.getElementById('int-score').value = score || '';
+      document.getElementById('int-feedback').value = feedback;
+      openModal('resultModal');
+    };
+
+    const saveResult = async () => {
+      const id = document.getElementById('edit-int-id').value;
+      try {
+        await api(`/interviews/${id}`, { method:'PUT', body: JSON.stringify({
+          status: document.getElementById('int-status').value,
+          result: document.getElementById('int-result').value,
+          score: parseInt(document.getElementById('int-score').value)||null,
+          feedback: document.getElementById('int-feedback').value,
+        })});
+        closeModal('resultModal'); showToast('Result recorded!'); loadInterviews();
+      } catch(err) { showToast(err.message,'error'); }
+    };
+  </script>
+</body>
+</html>

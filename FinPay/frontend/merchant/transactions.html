@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Merchant Transactions – FinPay</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span>FinPay</span>
+        <span class="brand-badge" style="background: #e0f2fe; color: #0284c7;">Merchant</span>
+      </div>
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.html">&#128202; Dashboard</a></li>
+        <li><a href="transactions.html" class="active">&#128220; Received Payments</a></li>
+        <li><a href="#" onclick="logout(); return false;">&#128682; Logout</a></li>
+      </ul>
+      <div class="sidebar-user">
+        <div class="user-name" id="user-display-name">Merchant</div>
+        <div class="user-role-tier" id="user-display-role">Campus Merchant</div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">Received Payments Ledger</h1>
+          <p class="page-subtitle">Full transaction log of customer payments</p>
+        </div>
+        <div>
+          <select id="merchant-switcher" class="form-control" style="width: auto; min-width: 240px;">
+            <option value="">Loading campus stores...</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Tx ID</th>
+                <th>Timestamp</th>
+                <th>Student Customer</th>
+                <th>Amount Received</th>
+                <th>Cashback Credited</th>
+                <th>Idempotency Reference</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="merchant-full-tx-tbody">
+              <tr><td colspan="7" style="text-align: center; color: var(--text-muted);">Loading payments...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    let allMerchants = [];
+
+    if (requireAuth(['merchant', 'admin'])) {
+      initSidebarUser();
+      setup();
+    }
+
+    async function setup() {
+      try {
+        allMerchants = await apiFetch('/api/merchants');
+        const user = getUser();
+        let matched = allMerchants[0];
+
+        if (user && user.name) {
+          const uLower = user.name.toLowerCase();
+          const found = allMerchants.find(m => m.merchant_name.toLowerCase().includes(uLower) || uLower.includes(m.category.toLowerCase()));
+          if (found) matched = found;
+        }
+
+        const select = document.getElementById('merchant-switcher');
+        select.innerHTML = allMerchants.map(m => `
+          <option value="${m.id}" ${m.id === matched.id ? 'selected' : ''}>
+            ${m.merchant_name} (${m.category})
+          </option>
+        `).join('');
+
+        select.addEventListener('change', (e) => {
+          loadTx(parseInt(e.target.value));
+        });
+
+        loadTx(matched.id);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    async function loadTx(mId) {
+      try {
+        const txs = await apiFetch(`/api/payments/merchant/${mId}`);
+        const tbody = document.getElementById('merchant-full-tx-tbody');
+
+        if (txs.length === 0) {
+          tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; color: var(--text-muted);">No payments recorded for this store.</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = txs.map(t => `
+          <tr>
+            <td><code>#${t.id}</code></td>
+            <td>${formatDate(t.created_at)}</td>
+            <td><strong>${t.user_name || 'Student #' + t.user_id}</strong></td>
+            <td style="font-weight: 700; color: var(--success);">+₹${t.amount_rupees.toFixed(2)}</td>
+            <td style="color: var(--accent); font-weight: 600;">₹${t.cashback_rupees.toFixed(2)}</td>
+            <td><code style="font-size: 0.78rem;">${t.idempotency_key}</code></td>
+            <td>${renderStatusBadge(t.status)}</td>
+          </tr>
+        `).join('');
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  </script>
+</body>
+</html>

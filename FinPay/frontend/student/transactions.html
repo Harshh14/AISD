@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transaction History – FinPay</title>
+  <link rel="stylesheet" href="../css/style.css">
+</head>
+<body>
+  <div class="app-layout">
+    <aside class="sidebar">
+      <div class="sidebar-brand">
+        <span>FinPay</span>
+        <span class="brand-badge">Student</span>
+      </div>
+      <ul class="sidebar-nav">
+        <li><a href="dashboard.html">&#128202; Dashboard</a></li>
+        <li><a href="wallet.html">&#128176; My Wallet</a></li>
+        <li><a href="pay.html">&#128184; Pay Merchant</a></li>
+        <li><a href="transactions.html" class="active">&#128220; History</a></li>
+        <li><a href="cashback.html">&#127873; Cashback & Tiers</a></li>
+        <li><a href="profile.html">&#128100; Profile</a></li>
+        <li><a href="#" onclick="logout(); return false;">&#128682; Logout</a></li>
+      </ul>
+      <div class="sidebar-user">
+        <div class="user-name" id="user-display-name">Loading...</div>
+        <div class="user-role-tier" id="user-display-role">Student</div>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <div class="topbar">
+        <div>
+          <h1 class="page-title">Transaction History</h1>
+          <p class="page-subtitle">Complete ledger of your payments and wallet top-ups</p>
+        </div>
+        <div style="display: flex; gap: 0.5rem;" id="filter-buttons">
+          <button class="btn btn-primary btn-sm" onclick="filterTransactions('all')">All</button>
+          <button class="btn btn-outline btn-sm" onclick="filterTransactions('payment')">Payments</button>
+          <button class="btn btn-outline btn-sm" onclick="filterTransactions('topup')">Top-Ups</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="table-container">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Transaction ID</th>
+                <th>Date & Time</th>
+                <th>Merchant / Action</th>
+                <th>Category</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Cashback Earned</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="transactions-tbody">
+              <tr><td colspan="8" style="text-align: center; color: var(--text-muted);">Loading transactions...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <script src="../js/api.js"></script>
+  <script src="../js/utils.js"></script>
+  <script>
+    let allTransactions = [];
+
+    if (requireAuth(['student'])) {
+      initSidebarUser();
+      loadHistory();
+    }
+
+    async function loadHistory() {
+      try {
+        allTransactions = await apiFetch('/api/payments/me');
+        renderTable(allTransactions);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+
+    function renderTable(list) {
+      const tbody = document.getElementById('transactions-tbody');
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: var(--text-muted);">No transactions found.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = list.map(t => `
+        <tr>
+          <td><code>#${t.id}</code></td>
+          <td>${formatDate(t.created_at)}</td>
+          <td><strong>${t.merchant_name}</strong></td>
+          <td><span class="badge badge-basic">${t.merchant_category || 'N/A'}</span></td>
+          <td><span class="badge ${t.transaction_type === 'topup' ? 'badge-info' : 'badge-prime'}">${t.transaction_type.toUpperCase()}</span></td>
+          <td style="font-weight: 600; color: ${t.transaction_type === 'topup' ? 'var(--success)' : 'var(--primary)'};">
+            ${t.transaction_type === 'topup' ? '+' : '-'}₹${t.amount_rupees.toFixed(2)}
+          </td>
+          <td style="font-weight: 600; color: var(--accent);">
+            ${t.cashback_rupees > 0 ? '+₹' + t.cashback_rupees.toFixed(2) : '-'}
+          </td>
+          <td>${renderStatusBadge(t.status)}</td>
+        </tr>
+      `).join('');
+    }
+
+    function filterTransactions(type) {
+      const btns = document.querySelectorAll('#filter-buttons button');
+      btns.forEach(b => {
+        b.className = 'btn btn-outline btn-sm';
+      });
+
+      if (type === 'all') {
+        btns[0].className = 'btn btn-primary btn-sm';
+        renderTable(allTransactions);
+      } else {
+        const idx = type === 'payment' ? 1 : 2;
+        btns[idx].className = 'btn btn-primary btn-sm';
+        const filtered = allTransactions.filter(t => t.transaction_type === type);
+        renderTable(filtered);
+      }
+    }
+  </script>
+</body>
+</html>
